@@ -15,7 +15,8 @@ import type {
   DirEntry,
   BoardData,
   BoardCard,
-  BoardColumn
+  BoardColumn,
+  RenameResult
 } from './types'
 
 export interface DesktopApi {
@@ -35,6 +36,8 @@ export interface DesktopApi {
     scan(): Promise<ProjectNode[]>
     git(path: string): Promise<GitStatus>
     setPref(path: string, key: string, value: string | null): Promise<void>
+    /** rename the project's folder on disk (confirms first); migrates board + prefs */
+    rename(path: string, newName: string): Promise<RenameResult>
   }
   agents: {
     list(): Promise<AgentProviderInfo[]>

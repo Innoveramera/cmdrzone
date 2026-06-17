@@ -26,6 +26,7 @@ drive them all.
 
 - **Project tree** from a root folder you pick — projects + monorepo sub-projects, with
   pinned/favorites, a stable per-project color, git dirty count, and live agent/session indicators.
+  Double-click a project name to **rename its folder** on disk (confirmed; board + prefs follow).
 - **Embedded agent terminals** — launch Claude Code (default) or Aider / Codex / Gemini / opencode
   per project, in real PTYs with your full login-shell PATH. Resume the last Claude conversation in
   one click (`claude --continue`).

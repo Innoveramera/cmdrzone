@@ -85,6 +85,7 @@ interface Store {
   focusTerminal: (projectId: string, terminalId: string) => void
   patchTerminal: (id: string, patch: Partial<TerminalTab>) => void
   togglePin: (node: ProjectNode) => Promise<void>
+  renameProject: (oldPath: string, newName: string) => Promise<void>
   loadGit: (path: string) => Promise<void>
 }
 
@@ -257,6 +258,40 @@ export const useStore = create<Store>((set, get) => ({
 
   togglePin: async (node) => {
     await window.api.projects.setPref(node.path, 'pinned', node.isPinned ? '0' : '1')
+    await get().refresh()
+  },
+
+  renameProject: async (oldPath, newName) => {
+    const res = await window.api.projects.rename(oldPath, newName)
+    if (!res.ok || !res.newPath) return
+    const newPath = res.newPath
+    // re-key in-memory references (project id == path) so open sessions stay attached
+    set((s) => {
+      const terminals: Record<string, TerminalTab> = {}
+      for (const id in s.terminals) {
+        const t = s.terminals[id]!
+        terminals[id] =
+          t.projectId === oldPath
+            ? {
+                ...t,
+                projectId: newPath,
+                cwd: t.cwd.startsWith(oldPath) ? newPath + t.cwd.slice(oldPath.length) : t.cwd
+              }
+            : t
+      }
+      const groups: Record<string, PaneGroup> = {}
+      for (const gid in s.groups) {
+        const g = s.groups[gid]!
+        groups[gid] = g.projectId === oldPath ? { ...g, projectId: newPath } : g
+      }
+      const activeGroupByProject = { ...s.activeGroupByProject }
+      if (activeGroupByProject[oldPath]) {
+        activeGroupByProject[newPath] = activeGroupByProject[oldPath]!
+        delete activeGroupByProject[oldPath]
+      }
+      const selectedProjectId = s.selectedProjectId === oldPath ? newPath : s.selectedProjectId
+      return { terminals, groups, activeGroupByProject, selectedProjectId }
+    })
     await get().refresh()
   },
 

@@ -10,6 +10,7 @@ export const IPC = {
   projectsScan: 'projects:scan',
   projectsGit: 'projects:git',
   projectSetPref: 'projects:setPref',
+  projectsRename: 'projects:rename',
   agentsList: 'agents:list',
   fsReadDir: 'fs:readDir',
   fsReadFile: 'fs:readFile',

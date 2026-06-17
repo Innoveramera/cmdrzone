@@ -94,3 +94,9 @@ export interface BoardData {
   columns: BoardColumn[]
   cards: BoardCard[]
 }
+
+export interface RenameResult {
+  ok: boolean
+  newPath?: string
+  error?: string
+}

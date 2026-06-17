@@ -15,28 +15,70 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
   const parent = flat ? node.parentPath?.split('/').pop() : undefined
   // open non-agent session (agent sessions already show a status pill)
   const hasSession = sum.agentCount === 0 && sum.termCount > 0
+  const [renaming, setRenaming] = useState(false)
+  const [name, setName] = useState(node.name)
+
+  const commit = () => {
+    setRenaming(false)
+    const next = name.trim()
+    if (next && next !== node.name) void useStore.getState().renameProject(node.path, next)
+    else setName(node.name)
+  }
 
   return (
     <div
       className={`trow ${child ? 'child' : ''} ${selected ? 'sel' : ''}`}
-      onClick={() => useStore.getState().selectProject(node.id)}
-      title={node.path}
+      onClick={() => !renaming && useStore.getState().selectProject(node.id)}
+      title={`${node.path}\n(double-click name to rename)`}
     >
       <span className="tdot2" style={{ background: node.color }} />
-      <span className="tname">{node.name}</span>
-      {parent && <span className="tparent">{parent}</span>}
-      {sum.agentCount > 0 && <span className={`pill sm ${st.cls}`}>{st.glyph}</span>}
-      {hasSession && <span className="tsession" title="open session">●</span>}
-      {git?.isRepo && git.dirty > 0 && <span className="tdirty">✎{git.dirty}</span>}
-      <span
-        className={`tstar ${node.isPinned ? 'on' : ''}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          void useStore.getState().togglePin(node)
-        }}
-      >
-        {node.isPinned ? '★' : '☆'}
-      </span>
+      {renaming ? (
+        <input
+          className="trow-rename"
+          autoFocus
+          value={name}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit()
+            else if (e.key === 'Escape') {
+              setName(node.name)
+              setRenaming(false)
+            }
+          }}
+        />
+      ) : (
+        <span
+          className="tname"
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            setName(node.name)
+            setRenaming(true)
+          }}
+        >
+          {node.name}
+        </span>
+      )}
+      {!renaming && parent && <span className="tparent">{parent}</span>}
+      {!renaming && sum.agentCount > 0 && <span className={`pill sm ${st.cls}`}>{st.glyph}</span>}
+      {!renaming && hasSession && (
+        <span className="tsession" title="open session">
+          ●
+        </span>
+      )}
+      {!renaming && git?.isRepo && git.dirty > 0 && <span className="tdirty">✎{git.dirty}</span>}
+      {!renaming && (
+        <span
+          className={`tstar ${node.isPinned ? 'on' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            void useStore.getState().togglePin(node)
+          }}
+        >
+          {node.isPinned ? '★' : '☆'}
+        </span>
+      )}
     </div>
   )
 }

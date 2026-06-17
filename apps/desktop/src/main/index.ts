@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { app, BrowserWindow, ipcMain, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
-import { join } from 'node:path'
+import { join, basename } from 'node:path'
 import os from 'node:os'
 import { IPC } from '@shared/ipc'
 import type {
@@ -16,6 +16,7 @@ import { composeEnv } from '@core/env/shell-path'
 import { initDatabase, closeDatabase, getDb } from '@core/persistence/database'
 import { scanProjects } from '@core/projects/scanner'
 import { gitStatus } from '@core/projects/git'
+import { renameProjectFolder } from '@core/projects/rename'
 import { detectProviders } from '@core/agents/providers'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
@@ -174,6 +175,23 @@ function registerIpc(): void {
       setProjectPref(path, key, value)
     }
   )
+
+  ipcMain.handle(IPC.projectsRename, (_e, { path, newName }: { path: string; newName: string }) => {
+    const name = newName.trim()
+    if (!name) return { ok: false, error: 'Empty name' }
+    const choice = win
+      ? dialog.showMessageBoxSync(win, {
+          type: 'warning',
+          buttons: ['Rename', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+          message: `Rename folder "${basename(path)}" to "${name}"?`,
+          detail: `This renames the actual folder on disk:\n${path}`
+        })
+      : 0
+    if (choice === 1) return { ok: false, error: 'cancelled' }
+    return renameProjectFolder(path, name)
+  })
 
   ipcMain.handle(IPC.agentsList, () => detectProviders())
 

@@ -333,6 +333,7 @@ input { font-family: inherit; }
 /* group folder header + its nested children with a vertical guide line */
 .tree-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 9px 12px 4px; }
 .tparent { font-size: 10px; color: var(--muted); background: #161b26; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; flex: none; }
+.trow-rename { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--accent); border-radius: 5px; padding: 2px 6px; color: var(--text); font-size: 12.5px; outline: none; }
 .tsession { color: var(--green); font-size: 8px; flex: none; }
 .tgroup { margin: 4px 0; }
 .trow.grouphdr { font-weight: 600; gap: 6px; }

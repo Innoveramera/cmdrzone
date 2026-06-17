@@ -33,7 +33,8 @@ const api: DesktopApi = {
   projects: {
     scan: () => ipcRenderer.invoke(IPC.projectsScan),
     git: (path) => ipcRenderer.invoke(IPC.projectsGit, path),
-    setPref: (path, key, value) => ipcRenderer.invoke(IPC.projectSetPref, { path, key, value })
+    setPref: (path, key, value) => ipcRenderer.invoke(IPC.projectSetPref, { path, key, value }),
+    rename: (path, newName) => ipcRenderer.invoke(IPC.projectsRename, { path, newName })
   },
   agents: {
     list: () => ipcRenderer.invoke(IPC.agentsList)
