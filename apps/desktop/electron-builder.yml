@@ -1,0 +1,25 @@
+appId: se.innoveramera.secondbrain
+productName: Second Brain
+directories:
+  output: release
+  buildResources: build
+# Use our pre-built native modules (pnpm rebuild:native against Electron's ABI).
+# electron-builder's own rebuild misbehaves under pnpm's hoisted monorepo layout.
+npmRebuild: false
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - '**/*.node'
+  - '**/node_modules/better-sqlite3/**'
+  - '**/node_modules/node-pty/**'
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+  # Ad-hoc signing for local builds. For distribution, set identity to your Apple
+  # Developer ID and provide notarization credentials (APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID).
+  identity: null
+  artifactName: ${productName}-${version}-${arch}.${ext}
+dmg:
+  title: ${productName}

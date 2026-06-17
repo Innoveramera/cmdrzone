@@ -1,0 +1,37 @@
+{
+  "name": "secondbrain-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Desktop command center for many projects + AI coding agents",
+  "license": "GPL-3.0-or-later",
+  "author": "Fredrik Hammarström <fredrik@innoveramera.se>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fredrikhammarstrom/secondbrain.git"
+  },
+  "homepage": "https://github.com/fredrikhammarstrom/secondbrain#readme",
+  "bugs": "https://github.com/fredrikhammarstrom/secondbrain/issues",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @secondbrain/desktop dev",
+    "build": "pnpm --filter @secondbrain/desktop build",
+    "start": "pnpm --filter @secondbrain/desktop start",
+    "dist": "pnpm --filter @secondbrain/desktop dist",
+    "typecheck": "pnpm -r typecheck",
+    "rebuild:native": "node scripts/rebuild-native.mjs"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "better-sqlite3",
+      "node-pty"
+    ]
+  }
+}
