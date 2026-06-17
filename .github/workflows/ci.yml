@@ -19,6 +19,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # node-gyp needs Python's distutils, removed from the stdlib in 3.12+.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
