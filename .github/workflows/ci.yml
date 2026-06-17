@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: the build only needs to read the repo. Fork PRs get a
+# read-only token, so a malicious PR can't push, comment, or alter releases.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-latest
