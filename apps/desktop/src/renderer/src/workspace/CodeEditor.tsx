@@ -2,44 +2,53 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { useEffect, useRef, useState } from 'react'
-import { EditorView, keymap } from '@codemirror/view'
-import { EditorState, type Extension } from '@codemirror/state'
-import { basicSetup } from 'codemirror'
-import { indentWithTab } from '@codemirror/commands'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { javascript } from '@codemirror/lang-javascript'
-import { json } from '@codemirror/lang-json'
-import { markdown } from '@codemirror/lang-markdown'
-import { css } from '@codemirror/lang-css'
-import { html } from '@codemirror/lang-html'
-import { python } from '@codemirror/lang-python'
+import * as monaco from 'monaco-editor'
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
-function langForPath(path: string): Extension {
-  const ext = path.split('.').pop()?.toLowerCase() ?? ''
-  if (['js', 'jsx', 'ts', 'tsx', 'mjs', 'cjs'].includes(ext)) {
-    return javascript({ jsx: true, typescript: ext.startsWith('ts') })
+// Wire Monaco's language-service web workers (Vite bundles each via ?worker).
+// Set once at module load.
+;(self as unknown as { MonacoEnvironment: monaco.Environment }).MonacoEnvironment = {
+  getWorker(_id, label) {
+    if (label === 'json') return new jsonWorker()
+    if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker()
+    if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker()
+    if (label === 'typescript' || label === 'javascript') return new tsWorker()
+    return new editorWorker()
   }
-  if (ext === 'json') return json()
-  if (['md', 'markdown'].includes(ext)) return markdown()
-  if (['css', 'scss', 'less'].includes(ext)) return css()
-  if (['html', 'htm'].includes(ext)) return html()
-  if (ext === 'py') return python()
-  return []
+}
+
+function languageFromPath(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() ?? ''
+  const map: Record<string, string> = {
+    ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
+    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
+    json: 'json', md: 'markdown', markdown: 'markdown',
+    css: 'css', scss: 'scss', less: 'less', html: 'html', htm: 'html',
+    py: 'python', rb: 'ruby', go: 'go', rs: 'rust', java: 'java', kt: 'kotlin',
+    swift: 'swift', dart: 'dart', sql: 'sql', sh: 'shell', bash: 'shell',
+    yml: 'yaml', yaml: 'yaml', toml: 'ini', xml: 'xml', php: 'php', c: 'c',
+    h: 'cpp', cpp: 'cpp', cc: 'cpp', cs: 'csharp'
+  }
+  return map[ext] ?? 'plaintext'
 }
 
 export function CodeEditor({ path }: { path: string }) {
   const hostRef = useRef<HTMLDivElement>(null)
-  const viewRef = useRef<EditorView | null>(null)
+  const edRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const pathRef = useRef(path)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   pathRef.current = path
 
   const save = async () => {
-    const view = viewRef.current
-    if (!view) return
+    const ed = edRef.current
+    if (!ed) return
     setSaving(true)
-    const ok = await window.api.fs.writeFile(pathRef.current, view.state.doc.toString())
+    const ok = await window.api.fs.writeFile(pathRef.current, ed.getValue())
     setSaving(false)
     if (ok) setDirty(false)
   }
@@ -49,42 +58,35 @@ export function CodeEditor({ path }: { path: string }) {
   useEffect(() => {
     if (!hostRef.current) return
     let disposed = false
-    const view = new EditorView({ parent: hostRef.current })
-    viewRef.current = view
+
+    const ed = monaco.editor.create(hostRef.current, {
+      value: '',
+      language: languageFromPath(path),
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: 13,
+      fontFamily: 'Menlo, "SF Mono", monospace',
+      minimap: { enabled: true },
+      scrollBeyondLastLine: false,
+      smoothScrolling: true,
+      tabSize: 2,
+      renderWhitespace: 'selection'
+    })
+    edRef.current = ed
+
+    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => void saveRef.current())
 
     window.api.fs.readFile(path).then((content) => {
       if (disposed) return
-      view.setState(
-        EditorState.create({
-          doc: content,
-          extensions: [
-            basicSetup,
-            keymap.of([
-              indentWithTab,
-              {
-                key: 'Mod-s',
-                preventDefault: true,
-                run: () => {
-                  void saveRef.current()
-                  return true
-                }
-              }
-            ]),
-            langForPath(path),
-            oneDark,
-            EditorView.updateListener.of((u) => {
-              if (u.docChanged) setDirty(true)
-            })
-          ]
-        })
-      )
+      ed.setValue(content)
       setDirty(false)
+      ed.onDidChangeModelContent(() => setDirty(true))
     })
 
     return () => {
       disposed = true
-      view.destroy()
-      viewRef.current = null
+      ed.dispose()
+      edRef.current = null
     }
   }, [path])
 

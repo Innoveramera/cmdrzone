@@ -27,7 +27,8 @@ drive them all.
 - **Embedded agent terminals** — launch Claude Code (default) or Aider / Codex / Gemini / opencode
   per project, in real PTYs with your full login-shell PATH. Resume the last Claude conversation in
   one click (`claude --continue`).
-- **Code editor** — a Files + CodeMirror editor tab with multi-file tabs, syntax highlighting and save.
+- **Code editor** — a Files + **Monaco** (VS Code's editor) tab with multi-file tabs, IntelliSense,
+  minimap, and save.
 - **Project info** — README / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity
@@ -39,7 +40,7 @@ drive them all.
 
 ## Stack
 
-Electron · electron-vite · React + TypeScript · node-pty + xterm.js · CodeMirror 6 ·
+Electron · electron-vite · React + TypeScript · node-pty + xterm.js · Monaco Editor ·
 better-sqlite3 · pnpm workspace.
 
 ## Requirements
@@ -91,7 +92,7 @@ apps/desktop/src/
 
 - Durable sessions (tmux-backed) — quit the app and agents keep running, reattach later
 - Vercel deploy status; richer dev-server detection
-- Optional Monaco editor; Windows support
+- Windows support
 
 ## Contributing
 
