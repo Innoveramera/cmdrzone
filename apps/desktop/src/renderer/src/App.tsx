@@ -41,6 +41,12 @@ export function App() {
       } else if (e.metaKey && e.key === 't' && selectedProjectId) {
         e.preventDefault()
         useStore.getState().newTerminal(selectedProjectId, { kind: 'shell', title: 'shell' })
+      } else if (e.metaKey && e.key === 'd' && selectedProjectId) {
+        // ⌘D split right, ⌘⇧D split down
+        e.preventDefault()
+        useStore
+          .getState()
+          .splitActive(selectedProjectId, e.shiftKey ? 'col' : 'row', { kind: 'shell', title: 'shell' })
       }
     }
     window.addEventListener('keydown', onKey)

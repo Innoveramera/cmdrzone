@@ -22,7 +22,7 @@ export function AgentRail() {
             key={t.id}
             className="rail-row"
             onClick={() => {
-              useStore.getState().setActiveTerminal(t.projectId, t.id)
+              useStore.getState().focusTerminal(t.projectId, t.id)
               useStore.getState().selectProject(t.projectId)
             }}
           >

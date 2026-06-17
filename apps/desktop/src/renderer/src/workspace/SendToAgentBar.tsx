@@ -2,11 +2,11 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { useState } from 'react'
-import { useStore } from '../state/store'
+import { useStore, activePaneId } from '../state/store'
 
 export function SendToAgentBar({ projectId }: { projectId: string }) {
-  const activeId = useStore((s) => s.activeTerminalByProject[projectId])
-  const tab = useStore((s) => (activeId ? s.terminals[activeId] : undefined))
+  const paneId = useStore((s) => activePaneId(s, projectId))
+  const tab = useStore((s) => (paneId ? s.terminals[paneId] : undefined))
   const project = useStore((s) => s.findProject(projectId))
   const [text, setText] = useState('')
 

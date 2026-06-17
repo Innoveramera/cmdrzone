@@ -6,6 +6,7 @@ import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
+export type SplitDir = 'row' | 'col'
 
 export interface TerminalTab {
   id: string
@@ -23,7 +24,17 @@ export interface TerminalTab {
   port?: number
 }
 
-let termSeq = 0
+/** A tab in the deck = a group of one or more terminal panes, split row/col. */
+export interface PaneGroup {
+  id: string
+  projectId: string
+  paneIds: string[]
+  dir: SplitDir
+  activePaneId: string
+}
+
+let seq = 0
+const uid = (p: string) => `${p}-${++seq}-${Date.now()}`
 
 function flatten(nodes: ProjectNode[]): ProjectNode[] {
   const out: ProjectNode[] = []
@@ -34,6 +45,14 @@ function flatten(nodes: ProjectNode[]): ProjectNode[] {
   return out
 }
 
+interface NewTermOpts {
+  kind: TerminalKind
+  providerId?: string
+  initialCommand?: string
+  title?: string
+  cwd?: string
+}
+
 interface Store {
   loading: boolean
   rootPath: string
@@ -41,11 +60,11 @@ interface Store {
   flat: ProjectNode[]
   agents: AgentProviderInfo[]
   gitByPath: Record<string, GitStatus>
-  /** the selected project (master-detail). null = show the dashboard. */
   selectedProjectId: string | null
   terminals: Record<string, TerminalTab>
-  order: string[]
-  activeTerminalByProject: Record<string, string>
+  groups: Record<string, PaneGroup>
+  groupOrder: string[]
+  activeGroupByProject: Record<string, string>
   paletteOpen: boolean
   infoCollapsed: boolean
   detailMode: 'terminals' | 'editor'
@@ -58,15 +77,31 @@ interface Store {
   togglePalette: (open?: boolean) => void
   toggleInfo: () => void
   setDetailMode: (m: 'terminals' | 'editor') => void
-  newTerminal: (
-    projectId: string,
-    opts: { kind: TerminalKind; providerId?: string; initialCommand?: string; title?: string; cwd?: string }
-  ) => string
+  newTerminal: (projectId: string, opts: NewTermOpts) => string
+  splitActive: (projectId: string, dir: SplitDir, opts: NewTermOpts) => string
   closeTerminal: (id: string) => void
-  setActiveTerminal: (projectId: string, id: string) => void
+  setActiveGroup: (projectId: string, groupId: string) => void
+  setActivePane: (groupId: string, paneId: string) => void
+  focusTerminal: (projectId: string, terminalId: string) => void
   patchTerminal: (id: string, patch: Partial<TerminalTab>) => void
   togglePin: (node: ProjectNode) => Promise<void>
   loadGit: (path: string) => Promise<void>
+}
+
+function makeTab(projectId: string, opts: NewTermOpts, project?: ProjectNode): TerminalTab {
+  return {
+    id: uid('term'),
+    projectId,
+    title: opts.title ?? (opts.kind === 'agent' ? 'Claude' : opts.kind === 'devserver' ? 'run' : 'shell'),
+    kind: opts.kind,
+    providerId: opts.providerId,
+    color: project?.color ?? '#61afef',
+    cwd: opts.cwd ?? project?.path ?? '',
+    initialCommand: opts.initialCommand,
+    status: opts.kind === 'agent' ? 'working' : 'idle',
+    lastLine: '',
+    exited: false
+  }
 }
 
 export const useStore = create<Store>((set, get) => ({
@@ -78,8 +113,9 @@ export const useStore = create<Store>((set, get) => ({
   gitByPath: {},
   selectedProjectId: null,
   terminals: {},
-  order: [],
-  activeTerminalByProject: {},
+  groups: {},
+  groupOrder: [],
+  activeGroupByProject: {},
   paletteOpen: false,
   infoCollapsed: false,
   detailMode: 'terminals',
@@ -92,7 +128,6 @@ export const useStore = create<Store>((set, get) => ({
     ])
     const flat = flatten(projects)
     set({ projects, flat, agents, rootPath: roots[0] ?? '', loading: false })
-    // Restore last-selected project on first load (don't override a current selection).
     if (!get().selectedProjectId) {
       const last = await window.api.settings.get('lastSelected')
       if (last && flat.some((p) => p.id === last)) set({ selectedProjectId: last })
@@ -127,26 +162,36 @@ export const useStore = create<Store>((set, get) => ({
 
   newTerminal: (projectId, opts) => {
     const project = get().flat.find((p) => p.id === projectId)
-    const id = `term-${++termSeq}-${Date.now()}`
-    const tab: TerminalTab = {
-      id,
-      projectId,
-      title: opts.title ?? (opts.kind === 'agent' ? 'Claude' : opts.kind === 'devserver' ? 'run' : 'shell'),
-      kind: opts.kind,
-      providerId: opts.providerId,
-      color: project?.color ?? '#61afef',
-      cwd: opts.cwd ?? project?.path ?? '',
-      initialCommand: opts.initialCommand,
-      status: opts.kind === 'agent' ? 'working' : 'idle',
-      lastLine: '',
-      exited: false
-    }
+    const tab = makeTab(projectId, opts, project)
+    const gid = uid('grp')
+    const group: PaneGroup = { id: gid, projectId, paneIds: [tab.id], dir: 'row', activePaneId: tab.id }
     set((s) => ({
-      terminals: { ...s.terminals, [id]: tab },
-      order: [...s.order, id],
-      activeTerminalByProject: { ...s.activeTerminalByProject, [projectId]: id }
+      terminals: { ...s.terminals, [tab.id]: tab },
+      groups: { ...s.groups, [gid]: group },
+      groupOrder: [...s.groupOrder, gid],
+      activeGroupByProject: { ...s.activeGroupByProject, [projectId]: gid }
     }))
-    return id
+    return tab.id
+  },
+
+  splitActive: (projectId, dir, opts) => {
+    const activeGid = get().activeGroupByProject[projectId]
+    const group = activeGid ? get().groups[activeGid] : undefined
+    if (!group) return get().newTerminal(projectId, opts)
+    const gid = group.id
+    const project = get().flat.find((p) => p.id === projectId)
+    const tab = makeTab(projectId, opts, project)
+    set((s) => {
+      const g = s.groups[gid]!
+      return {
+        terminals: { ...s.terminals, [tab.id]: tab },
+        groups: {
+          ...s.groups,
+          [gid]: { ...g, paneIds: [...g.paneIds, tab.id], dir, activePaneId: tab.id }
+        }
+      }
+    })
+    return tab.id
   },
 
   closeTerminal: (id) => {
@@ -154,19 +199,54 @@ export const useStore = create<Store>((set, get) => ({
       const tab = s.terminals[id]
       const terminals = { ...s.terminals }
       delete terminals[id]
-      const order = s.order.filter((t) => t !== id)
-      const active = { ...s.activeTerminalByProject }
-      if (tab && active[tab.projectId] === id) {
-        const sibling = order.find((t) => terminals[t]?.projectId === tab.projectId)
-        if (sibling) active[tab.projectId] = sibling
-        else delete active[tab.projectId]
+      const groups = { ...s.groups }
+      let groupOrder = [...s.groupOrder]
+      const activeGroupByProject = { ...s.activeGroupByProject }
+
+      const gid = Object.keys(groups).find((g) => groups[g]!.paneIds.includes(id))
+      if (gid) {
+        const g = groups[gid]!
+        const paneIds = g.paneIds.filter((p) => p !== id)
+        if (paneIds.length === 0) {
+          delete groups[gid]
+          groupOrder = groupOrder.filter((x) => x !== gid)
+          if (tab && activeGroupByProject[tab.projectId] === gid) {
+            const sibling = groupOrder.find((x) => groups[x]?.projectId === tab.projectId)
+            if (sibling) activeGroupByProject[tab.projectId] = sibling
+            else delete activeGroupByProject[tab.projectId]
+          }
+        } else {
+          const activePaneId = g.activePaneId === id ? paneIds[paneIds.length - 1]! : g.activePaneId
+          groups[gid] = { ...g, paneIds, activePaneId }
+        }
       }
-      return { terminals, order, activeTerminalByProject: active }
+      return { terminals, groups, groupOrder, activeGroupByProject }
     })
   },
 
-  setActiveTerminal: (projectId, id) =>
-    set((s) => ({ activeTerminalByProject: { ...s.activeTerminalByProject, [projectId]: id } })),
+  setActiveGroup: (projectId, groupId) =>
+    set((s) => ({ activeGroupByProject: { ...s.activeGroupByProject, [projectId]: groupId } })),
+
+  setActivePane: (groupId, paneId) =>
+    set((s) => {
+      const g = s.groups[groupId]
+      if (!g) return s
+      return {
+        groups: { ...s.groups, [groupId]: { ...g, activePaneId: paneId } },
+        activeGroupByProject: { ...s.activeGroupByProject, [g.projectId]: groupId }
+      }
+    }),
+
+  focusTerminal: (projectId, terminalId) =>
+    set((s) => {
+      const gid = Object.keys(s.groups).find((g) => s.groups[g]!.paneIds.includes(terminalId))
+      if (!gid) return s
+      const g = s.groups[gid]!
+      return {
+        activeGroupByProject: { ...s.activeGroupByProject, [projectId]: gid },
+        groups: { ...s.groups, [gid]: { ...g, activePaneId: terminalId } }
+      }
+    }),
 
   patchTerminal: (id, patch) =>
     set((s) => {
@@ -185,6 +265,12 @@ export const useStore = create<Store>((set, get) => ({
     set((s) => ({ gitByPath: { ...s.gitByPath, [path]: git } }))
   }
 }))
+
+/** the active pane (terminal id) of a project's active group */
+export function activePaneId(s: Store, projectId: string): string | undefined {
+  const gid = s.activeGroupByProject[projectId]
+  return gid ? s.groups[gid]?.activePaneId : undefined
+}
 
 /** projectIds whose detail panes must stay mounted (have terminals) ∪ selected. */
 export function liveWorkspaceIds(s: Store): string[] {

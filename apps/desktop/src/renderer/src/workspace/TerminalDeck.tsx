@@ -24,14 +24,15 @@ function launchCommandFor(id?: string): string {
 
 export function TerminalDeck({ projectId }: { projectId: string }) {
   const terminals = useStore((s) => s.terminals)
-  const order = useStore((s) => s.order)
-  const activeId = useStore((s) => s.activeTerminalByProject[projectId])
+  const groups = useStore((s) => s.groups)
+  const groupOrder = useStore((s) => s.groupOrder)
+  const activeGid = useStore((s) => s.activeGroupByProject[projectId])
   const agents = useStore((s) => s.agents)
   const project = useStore((s) => s.findProject(projectId))
 
-  const tabs = order
-    .map((id) => terminals[id])
-    .filter((t): t is NonNullable<typeof t> => !!t && t.projectId === projectId)
+  const myGroups = groupOrder
+    .map((g) => groups[g])
+    .filter((g): g is NonNullable<typeof g> => !!g && g.projectId === projectId)
 
   const resolveProvider = () => {
     const wantId = project?.defaultProviderId ?? 'claude-code'
@@ -42,44 +43,46 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
     )
   }
 
-  const newAgent = (resume = false) => {
+  const agentOpts = (resume = false) => {
     const prov = resolveProvider()
     const pid = prov?.id ?? 'claude-code'
     const base = launchCommandFor(pid)
-    // claude --continue resumes the most recent conversation in this folder
-    const cmd = resume && pid === 'claude-code' ? `${base} --continue` : base
-    useStore.getState().newTerminal(projectId, {
-      kind: 'agent',
+    return {
+      kind: 'agent' as const,
       providerId: prov?.id,
       title: resume ? 'Claude ↻' : prov?.name ?? 'Claude',
-      initialCommand: cmd
-    })
+      initialCommand: resume && pid === 'claude-code' ? `${base} --continue` : base
+    }
   }
+
+  const newAgent = (resume = false) => useStore.getState().newTerminal(projectId, agentOpts(resume))
   const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
 
   return (
     <div className="deck">
       <div className="tabstrip">
-        {tabs.map((t) => {
-          const st = STATUS_META[t.status]
+        {myGroups.map((g) => {
+          const active = terminals[g.activePaneId]
+          const st = STATUS_META[active?.status ?? 'idle']
           return (
             <button
-              key={t.id}
-              className={`tab ${t.id === activeId ? 'active' : ''}`}
-              onClick={() => useStore.getState().setActiveTerminal(projectId, t.id)}
+              key={g.id}
+              className={`tab ${g.id === activeGid ? 'active' : ''}`}
+              onClick={() => useStore.getState().setActiveGroup(projectId, g.id)}
             >
-              {t.kind === 'agent' && (
-                <span className={`tdot ${st.cls}`}>{t.exited ? '○' : st.glyph || '▶'}</span>
+              {active?.kind === 'agent' && (
+                <span className={`tdot ${st.cls}`}>{active.exited ? '○' : st.glyph || '▶'}</span>
               )}
               <span className="tab-title">
-                {t.kind === 'agent' ? '🤖 ' : t.kind === 'devserver' ? '▷ ' : '$ '}
-                {t.title}
+                {active?.kind === 'agent' ? '🤖 ' : active?.kind === 'devserver' ? '▷ ' : '$ '}
+                {active?.title}
+                {g.paneIds.length > 1 ? ` ⊞${g.paneIds.length}` : ''}
               </span>
               <span
                 className="tab-x"
                 onClick={(e) => {
                   e.stopPropagation()
-                  useStore.getState().closeTerminal(t.id)
+                  ;[...g.paneIds].forEach((pid) => useStore.getState().closeTerminal(pid))
                 }}
               >
                 ×
@@ -103,7 +106,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
       </div>
 
       <div className="deck-body">
-        {tabs.length === 0 && (
+        {myGroups.length === 0 && (
           <div className="deck-empty muted">
             No sessions yet.{' '}
             <button className="link" onClick={() => newAgent(false)}>
@@ -115,23 +118,74 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
             </button>
           </div>
         )}
-        {tabs.map((t) => (
+        {myGroups.map((g) => (
           <div
-            key={t.id}
-            className="term-slot"
-            style={{ display: t.id === activeId ? 'flex' : 'none' }}
+            key={g.id}
+            className="panes"
+            style={{
+              display: g.id === activeGid ? 'flex' : 'none',
+              flexDirection: g.dir === 'col' ? 'column' : 'row'
+            }}
           >
-            <div className="term-label" style={{ borderLeftColor: t.color }}>
-              <span className="dot" style={{ background: t.color }} /> {project?.name} · {t.title}
-            </div>
-            <div className="term-canvas">
-              <XTermView id={t.id} active={t.id === activeId} />
-            </div>
+            {g.paneIds.map((pid) => {
+              const t = terminals[pid]
+              if (!t) return null
+              const isActivePane = pid === g.activePaneId
+              const split = g.paneIds.length > 1
+              return (
+                <div
+                  key={pid}
+                  className={`pane ${split && isActivePane ? 'active' : ''}`}
+                  onMouseDown={() => useStore.getState().setActivePane(g.id, pid)}
+                >
+                  <div className="term-label" style={{ borderLeftColor: t.color }}>
+                    <span className="dot" style={{ background: t.color }} />
+                    <span className="pane-name">{t.title}</span>
+                    <span className="spacer" />
+                    <span
+                      className="pane-btn"
+                      title="Split right"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        useStore.getState().setActivePane(g.id, pid)
+                        useStore.getState().splitActive(projectId, 'row', { kind: 'shell', title: 'shell' })
+                      }}
+                    >
+                      ⬌
+                    </span>
+                    <span
+                      className="pane-btn"
+                      title="Split down"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        useStore.getState().setActivePane(g.id, pid)
+                        useStore.getState().splitActive(projectId, 'col', { kind: 'shell', title: 'shell' })
+                      }}
+                    >
+                      ⬍
+                    </span>
+                    <span
+                      className="pane-btn"
+                      title="Close pane"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        useStore.getState().closeTerminal(pid)
+                      }}
+                    >
+                      ×
+                    </span>
+                  </div>
+                  <div className="term-canvas">
+                    <XTermView id={pid} active={isActivePane && g.id === activeGid} />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         ))}
       </div>
 
-      {tabs.length > 0 && <SendToAgentBar projectId={projectId} />}
+      {myGroups.length > 0 && <SendToAgentBar projectId={projectId} />}
     </div>
   )
 }
