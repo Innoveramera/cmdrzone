@@ -15,6 +15,7 @@ asarUnpack:
   - '**/node_modules/node-pty/**'
 mac:
   category: public.app-category.developer-tools
+  icon: build/icon.png
   target:
     - dmg
   # Ad-hoc signing for local builds. For distribution, set identity to your Apple

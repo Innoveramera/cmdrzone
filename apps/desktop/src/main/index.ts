@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { app, BrowserWindow, ipcMain, utilityProcess, shell, dialog, type UtilityProcess } from 'electron'
+import { app, BrowserWindow, ipcMain, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
 import { join } from 'node:path'
 import os from 'node:os'
 import { IPC } from '@shared/ipc'
@@ -19,6 +19,10 @@ import { gitStatus } from '@core/projects/git'
 import { detectProviders } from '@core/agents/providers'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
+
+// Set the app name early (before userData paths/menus are derived). Fully reflected in the
+// macOS menu title once packaged; in dev it fixes About/Hide/Quit items + userData + notifications.
+app.setName('CmdrZone')
 
 function getRoots(): string[] {
   const def = JSON.stringify([join(os.homedir(), 'Development')])
@@ -296,6 +300,11 @@ app.whenReady().then(() => {
     )
     app.quit()
     return
+  }
+
+  if (process.platform === 'darwin' && app.dock) {
+    const icon = nativeImage.createFromPath(join(app.getAppPath(), 'build', 'icon.png'))
+    if (!icon.isEmpty()) app.dock.setIcon(icon)
   }
 
   createWindow()

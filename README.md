@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" width="120" alt="CmdrZone logo" /></p>
+
 # CmdrZone — Project Command Center
 
 [![CI](https://github.com/Innoveramera/cmdrzone/actions/workflows/ci.yml/badge.svg)](https://github.com/Innoveramera/cmdrzone/actions/workflows/ci.yml)
