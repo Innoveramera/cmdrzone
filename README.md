@@ -1,5 +1,8 @@
 # CmdrZone — Project Command Center
 
+[![CI](https://github.com/Innoveramera/cmdrzone/actions/workflows/ci.yml/badge.svg)](https://github.com/Innoveramera/cmdrzone/actions/workflows/ci.yml)
+[![License: GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+
 A macOS-first desktop "command center" for developers who juggle many projects and AI coding
 agents. It replaces a messy wall of iTerm tabs with a single window: a live tree of every project
 under a folder you choose (e.g. `~/Development`), and a per-project workspace with embedded
