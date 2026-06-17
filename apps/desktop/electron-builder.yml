@@ -1,5 +1,8 @@
 appId: se.innoveramera.cmdrzone
 productName: CmdrZone
+# pnpm hoists electron to the workspace root, so electron-builder can't auto-detect the
+# version — state it explicitly (keep in sync with the electron devDependency).
+electronVersion: 33.4.11
 directories:
   output: release
   buildResources: build

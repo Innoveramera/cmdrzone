@@ -13,7 +13,7 @@ import fs from 'node:fs'
 
 if (process.platform !== 'darwin') process.exit(0)
 
-const NAME = 'CmdrZone'
+const NAME = 'CmdrZone Dev' // dev instance is labelled distinctly from the installed app
 const PB = '/usr/libexec/PlistBuddy'
 const require = createRequire(import.meta.url)
 

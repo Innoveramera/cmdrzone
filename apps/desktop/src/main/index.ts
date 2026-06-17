@@ -20,9 +20,10 @@ import { detectProviders } from '@core/agents/providers'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
 
-// Set the app name early (before userData paths/menus are derived). Fully reflected in the
-// macOS menu title once packaged; in dev it fixes About/Hide/Quit items + userData + notifications.
-app.setName('CmdrZone')
+// Set the app name early (before userData paths/menus are derived). Dev uses a SEPARATE name so
+// its data store (~/Library/Application Support/CmdrZone Dev) is isolated from the installed app's
+// (~/Library/Application Support/CmdrZone) — so you can develop freely without touching daily-use data.
+app.setName(process.env.ELECTRON_RENDERER_URL ? 'CmdrZone Dev' : 'CmdrZone')
 
 function getRoots(): string[] {
   const def = JSON.stringify([join(os.homedir(), 'Development')])

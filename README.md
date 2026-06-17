@@ -75,6 +75,16 @@ pnpm dist             # package a macOS DMG (ad-hoc signed by default)
 For a distributable signed/notarized DMG, set your Apple Developer ID in
 `apps/desktop/electron-builder.yml` and provide notarization credentials.
 
+### Use it daily while developing
+
+```bash
+pnpm app:install   # build + copy CmdrZone.app to /Applications (re-run to update)
+```
+
+The installed app stores data in `~/Library/Application Support/CmdrZone`, **separate** from
+`pnpm dev` — which runs as **"CmdrZone Dev"** with its own data store — so development never
+disturbs your daily setup. First launch of the unsigned build: right-click → Open.
+
 ## Architecture
 
 ```

@@ -20,6 +20,7 @@
     "build": "pnpm --filter @cmdrzone/desktop build",
     "start": "pnpm --filter @cmdrzone/desktop start",
     "dist": "pnpm --filter @cmdrzone/desktop dist",
+    "app:install": "pnpm dist && rm -rf /Applications/CmdrZone.app && cp -R apps/desktop/release/mac-arm64/CmdrZone.app /Applications/ && echo 'Installed /Applications/CmdrZone.app'",
     "typecheck": "pnpm -r typecheck",
     "rebuild:native": "node scripts/rebuild-native.mjs"
   },
