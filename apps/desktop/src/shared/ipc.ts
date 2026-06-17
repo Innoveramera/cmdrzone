@@ -18,6 +18,11 @@ export const IPC = {
   settingsPickRoot: 'settings:pickRoot',
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
+  boardGet: 'board:get',
+  boardSaveCard: 'board:saveCard',
+  boardDeleteCard: 'board:deleteCard',
+  boardSaveColumn: 'board:saveColumn',
+  boardDeleteColumn: 'board:deleteColumn',
   revealInFinder: 'shell:reveal',
   openExternal: 'shell:openExternal',
   // renderer -> main (send, fire-and-forget)

@@ -12,7 +12,10 @@ import type {
   ProjectNode,
   GitStatus,
   AgentProviderInfo,
-  DirEntry
+  DirEntry,
+  BoardData,
+  BoardCard,
+  BoardColumn
 } from './types'
 
 export interface DesktopApi {
@@ -51,5 +54,12 @@ export interface DesktopApi {
   shell: {
     reveal(path: string): void
     openExternal(url: string): void
+  }
+  board: {
+    get(path: string): Promise<BoardData>
+    saveCard(card: BoardCard): Promise<void>
+    deleteCard(id: string): Promise<void>
+    saveColumn(column: BoardColumn): Promise<void>
+    deleteColumn(id: string): Promise<void>
   }
 }

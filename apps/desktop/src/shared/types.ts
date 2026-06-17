@@ -65,3 +65,32 @@ export interface EnvProbeResult {
   /** binary name -> absolute path, or null if not found on the resolved PATH */
   resolved: Record<string, string | null>
 }
+
+// ---- Board (Trello-style ideas/features/bugs, per project) ----
+
+export type CardType = 'idea' | 'feature' | 'bug' | 'task'
+
+export interface BoardColumn {
+  id: string
+  projectPath: string
+  title: string
+  position: number
+  createdAt: number
+}
+
+export interface BoardCard {
+  id: string
+  projectPath: string
+  columnId: string
+  title: string
+  body: string
+  type: CardType
+  position: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface BoardData {
+  columns: BoardColumn[]
+  cards: BoardCard[]
+}

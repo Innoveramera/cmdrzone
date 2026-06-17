@@ -52,6 +52,13 @@ const api: DesktopApi = {
   shell: {
     reveal: (path) => ipcRenderer.send(IPC.revealInFinder, path),
     openExternal: (url) => ipcRenderer.send(IPC.openExternal, url)
+  },
+  board: {
+    get: (path) => ipcRenderer.invoke(IPC.boardGet, path),
+    saveCard: (card) => ipcRenderer.invoke(IPC.boardSaveCard, card),
+    deleteCard: (id) => ipcRenderer.invoke(IPC.boardDeleteCard, id),
+    saveColumn: (column) => ipcRenderer.invoke(IPC.boardSaveColumn, column),
+    deleteColumn: (id) => ipcRenderer.invoke(IPC.boardDeleteColumn, id)
   }
 }
 

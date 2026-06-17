@@ -274,6 +274,49 @@ input { font-family: inherit; }
 .editor-empty { display: flex; align-items: center; justify-content: center; height: 100%; }
 .fsel { background: #1a2740; }
 
+/* ---------- Board (Kanban) ---------- */
+.board { height: 100%; display: flex; gap: 12px; padding: 14px; overflow-x: auto; align-items: flex-start; background: var(--bg); }
+.board-col { width: 280px; flex: none; max-height: 100%; display: flex; flex-direction: column; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; }
+.board-col-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.board-col-title { font-weight: 600; font-size: 13px; flex: 1; cursor: text; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-col-rename { flex: 1; background: var(--panel); border: 1px solid var(--accent); border-radius: 5px; padding: 3px 6px; color: var(--text); font-size: 13px; outline: none; }
+.board-col-count { font-size: 10px; color: var(--muted); background: #1a1f2b; border-radius: 8px; padding: 0 7px; }
+.board-col-del { color: #3a414f; cursor: pointer; font-size: 15px; }
+.board-col-del:hover { color: var(--red); }
+.board-col-cards { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+.board-card { background: var(--panel); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 9px; cursor: pointer; }
+.board-card:hover { border-color: var(--accent); }
+.board-card-title { font-size: 12.5px; margin-top: 5px; white-space: pre-wrap; word-break: break-word; }
+.board-card-body { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.ctag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 5px; }
+.ct-idea { background: rgba(97,175,239,0.16); color: var(--blue); }
+.ct-feature { background: rgba(87,217,163,0.16); color: var(--green); }
+.ct-bug { background: rgba(255,107,107,0.16); color: var(--red); }
+.ct-task { background: #1b2130; color: var(--muted); }
+.board-add-card { background: transparent; border: none; color: var(--muted); text-align: left; padding: 6px 10px; font-size: 12px; flex: none; }
+.board-add-card:hover { color: var(--text); }
+.board-add { padding: 8px; }
+.board-add textarea { width: 100%; background: var(--panel); border: 1px solid var(--border2); border-radius: 6px; padding: 6px; color: var(--text); resize: vertical; min-height: 48px; outline: none; font-family: inherit; font-size: 12.5px; }
+.board-add textarea:focus { border-color: var(--accent); }
+.board-add-row { display: flex; gap: 6px; margin-top: 6px; }
+.board-add-row button { background: #1a2740; border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
+.board-add-col { flex: none; width: 220px; align-self: flex-start; background: rgba(255,255,255,0.03); border: 1px dashed var(--border2); border-radius: 10px; color: var(--muted); padding: 12px; font-size: 13px; text-align: left; }
+.board-add-col:hover { color: var(--text); border-color: var(--accent); }
+
+/* card editor modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; z-index: 60; }
+.modal { width: 520px; max-width: 92vw; background: var(--panel); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal-title { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 16px; font-weight: 600; padding: 6px 2px; outline: none; }
+.type-row { display: flex; gap: 6px; margin: 12px 0; }
+.type-row .ctag { cursor: pointer; opacity: 0.45; border: 1px solid transparent; }
+.type-row .ctag.on { opacity: 1; outline: 1px solid currentColor; }
+.modal-body { width: 100%; min-height: 140px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; color: var(--text); resize: vertical; outline: none; font-family: inherit; font-size: 13px; margin-bottom: 12px; }
+.modal-body:focus { border-color: var(--accent); }
+.modal-actions { display: flex; align-items: center; gap: 8px; }
+.modal-actions button { background: #1a2740; border: 1px solid var(--border2); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--text); }
+.modal-actions .ghost { background: transparent; }
+.modal-actions .danger { background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); color: var(--red); }
+
 .tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .tree-head { padding: 8px 10px; border-bottom: 1px solid var(--border); flex: none; }
 .root-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }

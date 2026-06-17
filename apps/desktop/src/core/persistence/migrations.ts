@@ -79,6 +79,33 @@ const MIGRATIONS: Migration[] = [
         value TEXT
       );
     `)
+  },
+  // v2 — Trello-style board (ideas / features / bugs) per project
+  (db) => {
+    db.exec(`
+      CREATE TABLE board_columns (
+        id           TEXT PRIMARY KEY,
+        project_path TEXT NOT NULL,
+        title        TEXT NOT NULL,
+        position     REAL NOT NULL,
+        created_at   INTEGER NOT NULL
+      );
+      CREATE INDEX idx_board_columns_project ON board_columns(project_path);
+
+      CREATE TABLE board_cards (
+        id           TEXT PRIMARY KEY,
+        project_path TEXT NOT NULL,
+        column_id    TEXT NOT NULL,
+        title        TEXT NOT NULL,
+        body         TEXT,
+        type         TEXT NOT NULL DEFAULT 'idea',
+        position     REAL NOT NULL,
+        created_at   INTEGER NOT NULL,
+        updated_at   INTEGER NOT NULL
+      );
+      CREATE INDEX idx_board_cards_project ON board_cards(project_path);
+      CREATE INDEX idx_board_cards_column ON board_cards(column_id);
+    `)
   }
 ]
 

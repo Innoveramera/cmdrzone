@@ -11,7 +11,7 @@ import type {
   PtyResizePayload,
   PtyDisposePayload
 } from '@shared/ipc'
-import type { EnvProbeResult, ProjectNode } from '@shared/types'
+import type { EnvProbeResult, ProjectNode, BoardCard, BoardColumn } from '@shared/types'
 import { composeEnv } from '@core/env/shell-path'
 import { initDatabase, closeDatabase, getDb } from '@core/persistence/database'
 import { scanProjects } from '@core/projects/scanner'
@@ -19,6 +19,13 @@ import { gitStatus } from '@core/projects/git'
 import { detectProviders } from '@core/agents/providers'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
+import {
+  getBoard,
+  saveCard as boardSaveCard,
+  deleteCard as boardDeleteCard,
+  saveColumn as boardSaveColumn,
+  deleteColumn as boardDeleteColumn
+} from '@core/board/board'
 
 // Set the app name early (before userData paths/menus are derived). Dev uses a SEPARATE name so
 // its data store (~/Library/Application Support/CmdrZone Dev) is isolated from the installed app's
@@ -180,6 +187,12 @@ function registerIpc(): void {
   ipcMain.handle(IPC.settingsSet, (_e, { key, value }: { key: string; value: string }) =>
     setSetting(key, value)
   )
+
+  ipcMain.handle(IPC.boardGet, (_e, p: string) => getBoard(p))
+  ipcMain.handle(IPC.boardSaveCard, (_e, card: BoardCard) => boardSaveCard(card))
+  ipcMain.handle(IPC.boardDeleteCard, (_e, id: string) => boardDeleteCard(id))
+  ipcMain.handle(IPC.boardSaveColumn, (_e, col: BoardColumn) => boardSaveColumn(col))
+  ipcMain.handle(IPC.boardDeleteColumn, (_e, id: string) => boardDeleteColumn(id))
 
   ipcMain.handle(IPC.settingsGetRoots, () => getRoots())
   ipcMain.handle(IPC.settingsPickRoot, async (): Promise<string[] | null> => {

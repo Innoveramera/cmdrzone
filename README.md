@@ -31,6 +31,8 @@ drive them all.
   one click (`claude --continue`).
 - **Code editor** — a Files + **Monaco** (VS Code's editor) tab with multi-file tabs, IntelliSense,
   minimap, and save.
+- **Board** — a per-project Trello-style Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with
+  drag-and-drop cards and notes, persisted in SQLite — track what to build/fix per project.
 - **Project info** — README / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity

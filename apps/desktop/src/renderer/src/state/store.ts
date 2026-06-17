@@ -67,7 +67,7 @@ interface Store {
   activeGroupByProject: Record<string, string>
   paletteOpen: boolean
   infoCollapsed: boolean
-  detailMode: 'terminals' | 'editor'
+  detailMode: 'terminals' | 'editor' | 'board'
 
   refresh: () => Promise<void>
   pickRoot: () => Promise<void>
@@ -76,7 +76,7 @@ interface Store {
   clearSelection: () => void
   togglePalette: (open?: boolean) => void
   toggleInfo: () => void
-  setDetailMode: (m: 'terminals' | 'editor') => void
+  setDetailMode: (m: 'terminals' | 'editor' | 'board') => void
   newTerminal: (projectId: string, opts: NewTermOpts) => string
   splitActive: (projectId: string, dir: SplitDir, opts: NewTermOpts) => string
   closeTerminal: (id: string) => void
