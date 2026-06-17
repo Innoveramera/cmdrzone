@@ -46,7 +46,7 @@ better-sqlite3 · pnpm workspace.
 ## Quick start
 
 ```bash
-git clone https://github.com/fredrikhammarstrom/cmdrzone.git
+git clone https://github.com/Innoveramera/cmdrzone.git
 cd cmdrzone
 pnpm install          # installs deps + downloads Electron
 pnpm rebuild:native   # IMPORTANT: rebuild node-pty + better-sqlite3 for Electron's ABI

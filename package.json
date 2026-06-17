@@ -7,10 +7,10 @@
   "author": "Fredrik Hammarström <fredrik@innoveramera.se>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fredrikhammarstrom/cmdrzone.git"
+    "url": "https://github.com/Innoveramera/cmdrzone.git"
   },
-  "homepage": "https://github.com/fredrikhammarstrom/cmdrzone#readme",
-  "bugs": "https://github.com/fredrikhammarstrom/cmdrzone/issues",
+  "homepage": "https://github.com/Innoveramera/cmdrzone#readme",
+  "bugs": "https://github.com/Innoveramera/cmdrzone/issues",
   "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=20"
