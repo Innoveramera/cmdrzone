@@ -7,7 +7,7 @@
   "author": "Fredrik Hammarström <fredrik@innoveramera.se>",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "node ../../scripts/patch-electron-name.mjs && electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
