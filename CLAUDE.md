@@ -1,6 +1,6 @@
 # CLAUDE.md — working in this repo
 
-Second Brain is a macOS-first Electron + TypeScript desktop app (a command center for many
+CmdrZone is a macOS-first Electron + TypeScript desktop app (a command center for many
 projects + AI coding agents). pnpm workspace. See `README.md` and `CONTRIBUTING.md` for the
 full picture.
 

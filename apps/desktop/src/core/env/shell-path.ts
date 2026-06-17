@@ -114,7 +114,7 @@ export async function composeEnv(
   base.PATH = parts.join(':')
   base.TERM = 'xterm-256color'
   base.COLORTERM = 'truecolor'
-  base.TERM_PROGRAM = 'SecondBrain'
+  base.TERM_PROGRAM = 'CmdrZone'
 
   const resolved: Record<string, string | null> = {}
   for (const b of bins) resolved[b] = whichOn(b, base.PATH)

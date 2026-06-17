@@ -13,7 +13,7 @@ export function FocusedBanner() {
   if (!project) {
     return (
       <header className="banner banner-neutral">
-        <span className="brand">◧ Second Brain</span>
+        <span className="brand">◧ CmdrZone</span>
         <span className="spacer" />
         <button className="ghost" onClick={() => useStore.getState().togglePalette(true)}>
           ⌘K Switch

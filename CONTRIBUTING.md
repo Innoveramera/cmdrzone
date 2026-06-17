@@ -1,4 +1,4 @@
-# Contributing to Second Brain
+# Contributing to CmdrZone
 
 Thanks for your interest! This is an Electron + TypeScript desktop app in a pnpm workspace.
 

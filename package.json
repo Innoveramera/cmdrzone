@@ -1,5 +1,5 @@
 {
-  "name": "secondbrain-monorepo",
+  "name": "cmdrzone-monorepo",
   "private": true,
   "version": "0.0.0",
   "description": "Desktop command center for many projects + AI coding agents",
@@ -7,19 +7,19 @@
   "author": "Fredrik Hammarström <fredrik@innoveramera.se>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fredrikhammarstrom/secondbrain.git"
+    "url": "https://github.com/fredrikhammarstrom/cmdrzone.git"
   },
-  "homepage": "https://github.com/fredrikhammarstrom/secondbrain#readme",
-  "bugs": "https://github.com/fredrikhammarstrom/secondbrain/issues",
+  "homepage": "https://github.com/fredrikhammarstrom/cmdrzone#readme",
+  "bugs": "https://github.com/fredrikhammarstrom/cmdrzone/issues",
   "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm --filter @secondbrain/desktop dev",
-    "build": "pnpm --filter @secondbrain/desktop build",
-    "start": "pnpm --filter @secondbrain/desktop start",
-    "dist": "pnpm --filter @secondbrain/desktop dist",
+    "dev": "pnpm --filter @cmdrzone/desktop dev",
+    "build": "pnpm --filter @cmdrzone/desktop build",
+    "start": "pnpm --filter @cmdrzone/desktop start",
+    "dist": "pnpm --filter @cmdrzone/desktop dist",
     "typecheck": "pnpm -r typecheck",
     "rebuild:native": "node scripts/rebuild-native.mjs"
   },

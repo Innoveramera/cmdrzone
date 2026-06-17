@@ -1,4 +1,4 @@
-# Second Brain — Project Command Center
+# CmdrZone — Project Command Center
 
 A macOS-first desktop "command center" for developers who juggle many projects and AI coding
 agents. It replaces a messy wall of iTerm tabs with a single window: a live tree of every project
@@ -9,12 +9,12 @@ you can never prompt the wrong project.
 > Status: early but functional. Built in the open — issues and PRs welcome.
 
 <!-- Add a screenshot at docs/screenshot.png -->
-![Second Brain](docs/screenshot.png)
+![CmdrZone](docs/screenshot.png)
 
 ## Why
 
 Running 5+ projects, each with its own Claude Code session in a separate terminal tab, gets messy
-fast — wrong-tab prompts, no overview, lost sessions. Second Brain gives you one place to see and
+fast — wrong-tab prompts, no overview, lost sessions. CmdrZone gives you one place to see and
 drive them all.
 
 ## Features
@@ -46,8 +46,8 @@ better-sqlite3 · pnpm workspace.
 ## Quick start
 
 ```bash
-git clone https://github.com/fredrikhammarstrom/secondbrain.git
-cd secondbrain
+git clone https://github.com/fredrikhammarstrom/cmdrzone.git
+cd cmdrzone
 pnpm install          # installs deps + downloads Electron
 pnpm rebuild:native   # IMPORTANT: rebuild node-pty + better-sqlite3 for Electron's ABI
 pnpm dev              # launch with hot reload

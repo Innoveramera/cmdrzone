@@ -1,8 +1,8 @@
 {
-  "name": "@secondbrain/desktop",
+  "name": "@cmdrzone/desktop",
   "version": "0.0.0",
   "private": true,
-  "description": "Second Brain — Project Command Center (desktop app)",
+  "description": "CmdrZone — Project Command Center (desktop app)",
   "license": "GPL-3.0-or-later",
   "author": "Fredrik Hammarström <fredrik@innoveramera.se>",
   "main": "./out/main/index.js",

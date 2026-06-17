@@ -1,5 +1,5 @@
-appId: se.innoveramera.secondbrain
-productName: Second Brain
+appId: se.innoveramera.cmdrzone
+productName: CmdrZone
 directories:
   output: release
   buildResources: build

@@ -259,7 +259,7 @@ async function runSmoke(): Promise<void> {
 }
 
 app.whenReady().then(() => {
-  initDatabase(join(app.getPath('userData'), 'secondbrain.db'))
+  initDatabase(join(app.getPath('userData'), 'cmdrzone.db'))
   startPtyHost()
   registerIpc()
 

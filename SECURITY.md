@@ -7,7 +7,7 @@ with details and steps to reproduce. You'll get an acknowledgement as soon as po
 
 ## Scope & data handling
 
-Second Brain runs local AI agents that can execute commands in your projects. It:
+CmdrZone runs local AI agents that can execute commands in your projects. It:
 
 - spawns terminals using your login shell, scoped to each project's working directory;
 - reads project files (and writes files you edit in the editor);
