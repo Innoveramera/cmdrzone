@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { create } from 'zustand'
 import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
 

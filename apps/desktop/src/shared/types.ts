@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Framework-agnostic domain types shared between main, preload and renderer.
 // NOTHING in here may import electron or node — it is pure data.
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { app, BrowserWindow, ipcMain, utilityProcess, shell, dialog, type UtilityProcess } from 'electron'
 import { join } from 'node:path'
 import os from 'node:os'

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Resolve the user's *login + interactive* shell environment so spawned terminals
 // and agent binaries see the exact PATH they'd have in iTerm.
 //

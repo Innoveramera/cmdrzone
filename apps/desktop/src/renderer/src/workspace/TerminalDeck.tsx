@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
 import { STATUS_META } from '../lib/format'

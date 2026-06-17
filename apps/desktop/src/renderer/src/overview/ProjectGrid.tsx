@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { useMemo, useState } from 'react'
 import type { ProjectType } from '@shared/types'
 import { useStore } from '../state/store'

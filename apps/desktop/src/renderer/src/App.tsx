@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { useEffect } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, liveWorkspaceIds } from './state/store'

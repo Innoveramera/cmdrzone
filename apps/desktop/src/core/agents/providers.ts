@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Model-agnostic agent-provider registry. A provider is just a launch recipe + detector.
 // Claude Code is the built-in default. mode 'inject' = type the launch line into an
 // interactive shell so the user keeps a real, Ctrl-C-able terminal.

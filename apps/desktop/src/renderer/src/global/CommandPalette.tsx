@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 

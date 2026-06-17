@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Entry point for the PTY-host utilityProcess. Bridges main <-> node-pty over MessagePort.
 // Runs in a Node context (no electron module import); communicates via process.parentPort.
 

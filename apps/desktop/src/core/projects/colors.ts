@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Deterministic, stable per-project accent colors. The same project always gets the
 // same color (used across cards, rail, tabs, banner) so the brain learns it.
 

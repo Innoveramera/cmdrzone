@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Typed IPC contract shared by main + preload + renderer.
 
 export const IPC = {

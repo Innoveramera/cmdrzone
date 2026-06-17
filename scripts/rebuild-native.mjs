@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Rebuild native modules (better-sqlite3, node-pty) against Electron's ABI.
 //
 // We invoke node-gyp directly (not @electron/rebuild) for two reasons:

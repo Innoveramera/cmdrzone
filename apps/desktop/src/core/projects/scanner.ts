@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Project discovery for ~/Development/. Handles the three real folder shapes:
 //   - plain project: root has a marker (.git / package.json / pubspec.yaml)
 //   - group: no root marker, but >=1 immediate child has one (monorepo-ish folders)

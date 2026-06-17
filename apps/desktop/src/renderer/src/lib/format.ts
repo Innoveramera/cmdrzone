@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import type { ProjectType } from '@shared/types'
 import type { AgentStatus, TerminalTab } from '../state/store'
 

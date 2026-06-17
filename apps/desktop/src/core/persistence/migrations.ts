@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Forward-only migrations keyed off SQLite's user_version pragma.
 import type DatabaseType from 'better-sqlite3'
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // node-pty session manager. Runs inside the PTY-host utilityProcess (Node context),
 // NOT the main process, so a chatty agent can't jank the UI and a native crash is isolated.
 

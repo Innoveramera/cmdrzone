@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Thin repositories over the SQLite store. Project *preferences* (pin/hide/color/default
 // provider/last-opened) are stored as overrides keyed by stable path, so a rescan never
 // clobbers user intent.

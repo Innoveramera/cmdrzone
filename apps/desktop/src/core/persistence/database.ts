@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import Database from 'better-sqlite3'
 import { runMigrations } from './migrations'
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 import type { AgentStatus } from '../state/store'
 
 // eslint-disable-next-line no-control-regex

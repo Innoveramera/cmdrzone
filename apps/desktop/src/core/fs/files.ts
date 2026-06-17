@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Minimal filesystem reads for the file explorer + doc previews. Read-only.
 import fs from 'node:fs'
 import path from 'node:path'

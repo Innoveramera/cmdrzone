@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // The shape of `window.api` exposed by the preload via contextBridge.
 import type {
   PtyCreateOptions,

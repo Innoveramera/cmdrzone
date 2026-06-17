@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Fredrik Hammarström
+
 // Lightweight git status via `git status --porcelain=v2 --branch`. Cheap and accurate.
 import { execFile } from 'node:child_process'
 import type { GitStatus } from '@shared/types'
