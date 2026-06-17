@@ -22,6 +22,8 @@ export interface TerminalTab {
   exited: boolean
   /** detected dev-server port (from terminal output) */
   port?: number
+  /** if set, the terminal spawns this process directly instead of shell + inject */
+  spawn?: { command: string; args: string[] }
 }
 
 /** A tab in the deck = a group of one or more terminal panes, split row/col. */
@@ -51,6 +53,7 @@ interface NewTermOpts {
   initialCommand?: string
   title?: string
   cwd?: string
+  spawn?: { command: string; args: string[] }
 }
 
 interface Store {
@@ -99,6 +102,7 @@ function makeTab(projectId: string, opts: NewTermOpts, project?: ProjectNode): T
     color: project?.color ?? '#61afef',
     cwd: opts.cwd ?? project?.path ?? '',
     initialCommand: opts.initialCommand,
+    spawn: opts.spawn,
     status: opts.kind === 'agent' ? 'working' : 'idle',
     lastLine: '',
     exited: false

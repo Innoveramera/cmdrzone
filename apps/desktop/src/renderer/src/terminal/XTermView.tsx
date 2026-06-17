@@ -72,7 +72,8 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
       cwd: tab.cwd,
       cols: term.cols,
       rows: term.rows,
-      initialCommand: tab.initialCommand
+      initialCommand: tab.initialCommand,
+      spawn: tab.spawn
     })
 
     const ro = new ResizeObserver(() => {

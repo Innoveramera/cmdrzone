@@ -3,6 +3,8 @@
 
 import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { ProjectNode, BoardCard, BoardColumn, CardType } from '@shared/types'
+import { useStore } from '../state/store'
+import { composePrompt } from '../lib/prompt'
 
 const TYPES: { key: CardType; label: string; emoji: string; cls: string }[] = [
   { key: 'idea', label: 'Idea', emoji: '💡', cls: 'ct-idea' },
@@ -19,7 +21,11 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
   const [columns, setColumns] = useState<BoardColumn[]>([])
   const [cards, setCards] = useState<BoardCard[]>([])
   const [editing, setEditing] = useState<BoardCard | null>(null)
+  const [launching, setLaunching] = useState<BoardCard | null>(null)
   const dragId = useRef<string | null>(null)
+
+  const claude = useStore((s) => s.agents.find((a) => a.id === 'claude-code'))
+  const claudeReady = !!claude?.installed && !!claude.path
 
   useEffect(() => {
     let alive = true
@@ -110,6 +116,22 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
     void window.api.board.deleteColumn(id)
   }
 
+  // Launch a Claude session seeded with the card prompt; move card to "In Progress" if present.
+  const launch = (card: BoardCard, promptText: string) => {
+    if (!claude?.installed || !claude.path) return
+    useStore.getState().setDetailMode('terminals')
+    useStore.getState().newTerminal(project.id, {
+      kind: 'agent',
+      providerId: 'claude-code',
+      title: card.title.slice(0, 24) || 'Claude',
+      spawn: { command: claude.path, args: [promptText] }
+    })
+    const ip = columns.find((c) => c.title.trim().toLowerCase() === 'in progress')
+    if (ip && card.columnId !== ip.id) moveCard(card.id, ip.id)
+    setLaunching(null)
+    setEditing(null)
+  }
+
   const sorted = [...columns].sort((a, b) => a.position - b.position)
 
   return (
@@ -120,10 +142,12 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
           col={col}
           cards={cardsIn(col.id)}
           dragId={dragId}
+          launchReady={claudeReady}
           onAddCard={(t) => addCard(col.id, t)}
           onRename={(t) => renameColumn(col, t)}
           onDelete={() => deleteColumn(col.id)}
           onCardClick={(c) => setEditing(c)}
+          onLaunch={(c) => setLaunching(c)}
           onDropToColumn={() => dragId.current && moveCard(dragId.current, col.id)}
           onDropBeforeCard={(cardId) => dragId.current && moveCard(dragId.current, col.id, cardId)}
         />
@@ -141,6 +165,21 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
             setEditing(null)
           }}
           onDelete={() => removeCard(editing.id)}
+          onStart={(c) => {
+            updateCard(c)
+            setEditing(null)
+            setLaunching(c)
+          }}
+        />
+      )}
+
+      {launching && (
+        <LaunchPreview
+          card={launching}
+          projectName={project.name}
+          ready={claudeReady}
+          onLaunch={(prompt) => launch(launching, prompt)}
+          onClose={() => setLaunching(null)}
         />
       )}
     </div>
@@ -151,10 +190,12 @@ function BoardColumnView(props: {
   col: BoardColumn
   cards: BoardCard[]
   dragId: MutableRefObject<string | null>
+  launchReady: boolean
   onAddCard: (t: string) => void
   onRename: (t: string) => void
   onDelete: () => void
   onCardClick: (c: BoardCard) => void
+  onLaunch: (c: BoardCard) => void
   onDropToColumn: () => void
   onDropBeforeCard: (cardId: string) => void
 }) {
@@ -208,7 +249,9 @@ function BoardColumnView(props: {
             key={c.id}
             card={c}
             dragId={props.dragId}
+            launchReady={props.launchReady}
             onClick={() => props.onCardClick(c)}
+            onLaunch={() => props.onLaunch(c)}
             onDropBefore={() => props.onDropBeforeCard(c.id)}
           />
         ))}
@@ -264,7 +307,9 @@ function BoardColumnView(props: {
 function BoardCardView(props: {
   card: BoardCard
   dragId: MutableRefObject<string | null>
+  launchReady: boolean
   onClick: () => void
+  onLaunch: () => void
   onDropBefore: () => void
 }) {
   const { card } = props
@@ -290,6 +335,18 @@ function BoardCardView(props: {
       }}
       onClick={props.onClick}
     >
+      {props.launchReady && (
+        <span
+          className="card-launch"
+          title="Start a Claude session from this card"
+          onClick={(e) => {
+            e.stopPropagation()
+            props.onLaunch()
+          }}
+        >
+          ▶
+        </span>
+      )}
       <span className={`ctag ${tm.cls}`}>
         {tm.emoji} {tm.label}
       </span>
@@ -304,10 +361,12 @@ function CardEditor(props: {
   onClose: () => void
   onSave: (c: BoardCard) => void
   onDelete: () => void
+  onStart: (c: BoardCard) => void
 }) {
   const [title, setTitle] = useState(props.card.title)
   const [body, setBody] = useState(props.card.body)
   const [type, setType] = useState<CardType>(props.card.type)
+  const edited = (): BoardCard => ({ ...props.card, title: title.trim() || props.card.title, body, type })
 
   return (
     <div className="modal-overlay" onClick={props.onClose}>
@@ -337,19 +396,59 @@ function CardEditor(props: {
           placeholder="Notes / details…"
         />
         <div className="modal-actions">
-          <button
-            onClick={() =>
-              props.onSave({ ...props.card, title: title.trim() || props.card.title, body, type })
-            }
-          >
-            Save
+          <button className="primary" onClick={() => props.onStart(edited())}>
+            ▶ Start session
           </button>
+          <button onClick={() => props.onSave(edited())}>Save</button>
           <button className="ghost" onClick={props.onClose}>
             Cancel
           </button>
           <span className="spacer" />
           <button className="danger" onClick={props.onDelete}>
             Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LaunchPreview(props: {
+  card: BoardCard
+  projectName: string
+  ready: boolean
+  onLaunch: (prompt: string) => void
+  onClose: () => void
+}) {
+  const [prompt, setPrompt] = useState(() => composePrompt(props.card))
+  return (
+    <div className="modal-overlay" onClick={props.onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="launch-head">
+          ▶ Start Claude session · <b>{props.projectName}</b>
+        </div>
+        <textarea
+          className="modal-body launch-prompt"
+          autoFocus
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Prompt…"
+        />
+        {!props.ready && (
+          <div className="launch-warn small">
+            ⚠ Claude Code not found on your PATH — install it or check the agent list.
+          </div>
+        )}
+        <div className="modal-actions">
+          <button
+            className="primary"
+            disabled={!props.ready || !prompt.trim()}
+            onClick={() => props.onLaunch(prompt)}
+          >
+            ▶ Launch session
+          </button>
+          <button className="ghost" onClick={props.onClose}>
+            Cancel
           </button>
         </div>
       </div>

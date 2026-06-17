@@ -32,15 +32,19 @@ export async function createSession(
 ): Promise<void> {
   const { env, shell } = await ensureEnv()
 
-  // Spawn a LOGIN + INTERACTIVE shell so dotfiles load and PATH matches iTerm exactly.
-  const args = process.platform === 'win32' ? [] : ['-l', '-i']
-  const proc = pty.spawn(shell, args, {
+  const dims = {
     name: 'xterm-256color',
     cols: Math.max(1, opts.cols || 80),
     rows: Math.max(1, opts.rows || 24),
     cwd: opts.cwd || os.homedir(),
     env: { ...env }
-  })
+  }
+
+  // Either spawn a process directly (argv → no shell escaping, multi-line safe; used to seed an
+  // agent with a prompt), or a LOGIN + INTERACTIVE shell so dotfiles load and PATH matches iTerm.
+  const proc = opts.spawn
+    ? pty.spawn(opts.spawn.command, opts.spawn.args, dims)
+    : pty.spawn(shell, process.platform === 'win32' ? [] : ['-l', '-i'], dims)
 
   sessions.set(opts.id, { id: opts.id, proc })
 
@@ -50,8 +54,8 @@ export async function createSession(
     onExit(opts.id, exitCode, signal)
   })
 
-  // Agent launch / proof command: let the shell finish its init, then type the command.
-  if (opts.initialCommand) {
+  // Inject-mode agent launch: let the shell finish its init, then type the command.
+  if (!opts.spawn && opts.initialCommand) {
     setTimeout(() => {
       sessions.get(opts.id)?.proc.write(opts.initialCommand + '\r')
     }, 400)

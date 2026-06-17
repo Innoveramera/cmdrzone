@@ -34,6 +34,8 @@ drive them all.
   minimap, and save.
 - **Board** — a per-project Trello-style Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with
   drag-and-drop cards and notes, persisted in SQLite — track what to build/fix per project.
+  **Launch a Claude session straight from a card** (▶): its title/body seed the prompt (editable
+  preview first), the session opens in the Terminals tab, and the card slides to "In Progress".
 - **Project info** — README / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity

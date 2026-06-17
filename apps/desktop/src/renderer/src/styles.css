@@ -316,6 +316,17 @@ input { font-family: inherit; }
 .modal-actions button { background: #1a2740; border: 1px solid var(--border2); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--text); }
 .modal-actions .ghost { background: transparent; }
 .modal-actions .danger { background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); color: var(--red); }
+.modal-actions .primary { background: #1a2740; border-color: var(--accent); color: var(--text); }
+.modal-actions button:disabled { opacity: 0.45; cursor: default; }
+
+/* launch a session from a card */
+.board-card { position: relative; }
+.card-launch { position: absolute; top: 6px; right: 6px; opacity: 0; color: var(--blue); font-size: 10px; cursor: pointer; background: var(--panel2); border: 1px solid var(--border2); border-radius: 5px; padding: 1px 7px; line-height: 1.5; }
+.board-card:hover .card-launch { opacity: 1; }
+.card-launch:hover { background: #1a2740; color: var(--text); }
+.launch-head { font-size: 13px; margin-bottom: 10px; color: var(--muted); }
+.launch-prompt { min-height: 200px; }
+.launch-warn { color: var(--amber); margin: -6px 0 12px; }
 
 .tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .tree-head { padding: 8px 10px; border-bottom: 1px solid var(--border); flex: none; }

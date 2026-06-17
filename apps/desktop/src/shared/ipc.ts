@@ -42,6 +42,8 @@ export interface PtyCreateOptions {
   rows: number
   /** optional command injected into the interactive shell after it starts (agent launch) */
   initialCommand?: string
+  /** if set, spawn this process directly (argv, no shell) instead of shell + inject */
+  spawn?: { command: string; args: string[] }
 }
 
 export interface PtyInputPayload {
