@@ -18,6 +18,8 @@
     "src/core",
     "src/pty",
     "src/shared",
+    "src/cli",
+    "src/mcp",
     "electron.vite.config.ts"
   ]
 }

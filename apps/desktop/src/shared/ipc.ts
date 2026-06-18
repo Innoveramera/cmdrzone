@@ -26,13 +26,30 @@ export const IPC = {
   boardDeleteColumn: 'board:deleteColumn',
   revealInFinder: 'shell:reveal',
   openExternal: 'shell:openExternal',
+  clipboardRead: 'clipboard:read',
+  // durable sessions (tmux)
+  durableStatus: 'durable:status',
+  durableSetEnabled: 'durable:setEnabled',
+  durableList: 'durable:list',
+  // app version + in-app updates + changelog
+  appGetVersion: 'app:getVersion',
+  updateCheck: 'update:check',
+  updateGetState: 'update:getState',
+  changelogGet: 'changelog:get',
   // renderer -> main (send, fire-and-forget)
   ptyInput: 'pty:input',
   ptyResize: 'pty:resize',
   ptyDispose: 'pty:dispose',
+  /** destroy a session for good (vs dispose, which only detaches a durable one) */
+  ptyKill: 'pty:kill',
+  clipboardWrite: 'clipboard:write',
+  /** restart and apply a staged update */
+  updateInstall: 'update:install',
   // main -> renderer (events)
   ptyData: 'pty:data',
-  ptyExit: 'pty:exit'
+  ptyExit: 'pty:exit',
+  /** pushed whenever the updater's state changes */
+  updateState: 'update:state'
 } as const
 
 export interface PtyCreateOptions {

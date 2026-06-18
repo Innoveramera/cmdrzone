@@ -140,6 +140,13 @@ export function ProjectTree() {
           <button className="mini" onClick={() => void useStore.getState().pickRoot()} title="Change folder">
             change
           </button>
+          <button
+            className="collapse-btn"
+            onClick={() => useStore.getState().toggleSidebar()}
+            title="Hide sidebar"
+          >
+            «
+          </button>
         </div>
         <input
           className="tree-search"

@@ -29,13 +29,20 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
 
   useEffect(() => {
     let alive = true
-    window.api.board.get(project.path).then((d) => {
-      if (!alive) return
-      setColumns(d.columns)
-      setCards(d.cards)
-    })
+    const load = (): void => {
+      window.api.board.get(project.path).then((d) => {
+        if (!alive) return
+        setColumns(d.columns)
+        setCards(d.cards)
+      })
+    }
+    load()
+    // External writers (the cmdrzone CLI/MCP) can change the board while the app is open;
+    // re-pull when the window regains focus so agent-created cards appear.
+    window.addEventListener('focus', load)
     return () => {
       alive = false
+      window.removeEventListener('focus', load)
     }
   }, [project.path])
 

@@ -11,6 +11,7 @@ import {
   disposeSession,
   disposeAll
 } from '@pty/session-manager'
+import type { TmuxRef } from '@core/tmux/tmux'
 import type { PtyCreateOptions } from '@shared/ipc'
 
 interface ParentPortLike {
@@ -24,7 +25,7 @@ if (!port) {
 }
 
 type HostMessage =
-  | { type: 'create'; payload: PtyCreateOptions }
+  | { type: 'create'; payload: PtyCreateOptions; tmux?: TmuxRef }
   | { type: 'input'; id: string; data: string }
   | { type: 'resize'; id: string; cols: number; rows: number }
   | { type: 'dispose'; id: string }
@@ -35,6 +36,7 @@ port.on('message', async (e) => {
     case 'create':
       await createSession(
         msg.payload,
+        msg.tmux ?? null,
         (id, data) => port.postMessage({ type: 'data', id, data }),
         (id, exitCode, signal) => port.postMessage({ type: 'exit', id, exitCode, signal })
       )
