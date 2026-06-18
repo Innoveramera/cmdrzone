@@ -307,57 +307,116 @@ input { font-family: inherit; }
 
 /* ---------- Board (Kanban) ---------- */
 .board { height: 100%; display: flex; gap: 12px; padding: 14px; overflow-x: auto; align-items: flex-start; background: var(--bg); }
-.board-col { width: 280px; flex: none; max-height: 100%; display: flex; flex-direction: column; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; }
-.board-col-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.board-col {
+  width: 286px; flex: none; max-height: 100%; display: flex; flex-direction: column;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.board-col.drag-over { border-color: var(--accent); background: #0f1320; box-shadow: inset 0 0 0 1px rgba(155,180,255,0.18); }
+.board-col-head { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-bottom: 1px solid var(--border); }
 .board-col-title { font-weight: 600; font-size: 13px; flex: 1; cursor: text; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .board-col-rename { flex: 1; background: var(--panel); border: 1px solid var(--accent); border-radius: 5px; padding: 3px 6px; color: var(--text); font-size: 13px; outline: none; }
-.board-col-count { font-size: 10px; color: var(--muted); background: #1a1f2b; border-radius: 8px; padding: 0 7px; }
-.board-col-del { color: #3a414f; cursor: pointer; font-size: 15px; }
+.board-col-count { font-size: 10px; font-weight: 600; color: var(--muted); background: #1a1f2b; border-radius: 999px; padding: 1px 8px; min-width: 20px; text-align: center; }
+.board-col-del { color: #3a414f; cursor: pointer; font-size: 16px; line-height: 1; transition: color 0.12s ease; }
 .board-col-del:hover { color: var(--red); }
-.board-col-cards { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 7px; }
-.board-card { background: var(--panel); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 9px; cursor: pointer; }
-.board-card:hover { border-color: var(--accent); }
-.board-card-title { font-size: 12.5px; margin-top: 5px; white-space: pre-wrap; word-break: break-word; }
-.board-card-body { font-size: 10px; color: var(--muted); margin-top: 4px; }
-.ctag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 5px; }
+.board-col-cards { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; }
+.board-col-empty { color: #4a5263; font-size: 11px; font-style: italic; text-align: center; padding: 16px 0; }
+/* spacing lives in the slot's top gap so it's part of the card's drop hit-area (no dead zones) */
+.board-card-slot { position: relative; padding-top: 7px; display: flex; flex-direction: column; }
+.board-col-cards > .board-card-slot:first-child { padding-top: 0; }
+
+/* card face */
+.board-card {
+  position: relative; background: var(--panel); border: 1px solid var(--border2);
+  border-radius: 9px; padding: 9px 11px; cursor: grab;
+  display: flex; flex-direction: column; gap: 5px;
+  --card-accent: var(--border2);
+  box-shadow: inset 3px 0 0 var(--card-accent), 0 1px 2px rgba(0,0,0,0.25);
+  transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
+  animation: card-in 0.18s ease backwards;
+}
+.board-card[data-type="idea"] { --card-accent: var(--blue); }
+.board-card[data-type="feature"] { --card-accent: var(--green); }
+.board-card[data-type="bug"] { --card-accent: var(--red); }
+.board-card[data-type="task"] { --card-accent: var(--muted); }
+.board-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: inset 3px 0 0 var(--card-accent), 0 8px 20px rgba(0,0,0,0.42); }
+.board-card:active { cursor: grabbing; }
+.board-card.dragging { opacity: 0.4; transform: scale(0.97); cursor: grabbing; box-shadow: inset 3px 0 0 var(--card-accent), 0 2px 6px rgba(0,0,0,0.3); }
+.board-card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.board-card-title { font-size: 12.5px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.board-card-body { font-size: 11px; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.board-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; }
+.card-time { font-size: 10px; color: #5a6273; }
+.card-note { font-size: 10px; opacity: 0.6; }
+
+/* type tags */
+.ctag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
 .ct-idea { background: rgba(97,175,239,0.16); color: var(--blue); }
 .ct-feature { background: rgba(87,217,163,0.16); color: var(--green); }
 .ct-bug { background: rgba(255,107,107,0.16); color: var(--red); }
 .ct-task { background: #1b2130; color: var(--muted); }
-.board-add-card { background: transparent; border: none; color: var(--muted); text-align: left; padding: 6px 10px; font-size: 12px; flex: none; }
-.board-add-card:hover { color: var(--text); }
+
+/* drop indicator while dragging */
+.drop-line { position: absolute; top: 2px; left: 2px; right: 2px; height: 2px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 8px rgba(155,180,255,0.7); pointer-events: none; z-index: 3; animation: drop-pulse 0.9s ease-in-out infinite; }
+.drop-line-end { position: relative; top: auto; margin: 6px 2px 1px; }
+
+/* launch-a-session button (top-right of card, reveals on hover) */
+.card-launch {
+  flex: none; opacity: 0; width: 21px; height: 21px; padding: 0 0 0 1px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--blue); font-size: 9px; cursor: pointer;
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: 999px;
+  transition: opacity 0.13s ease, background 0.13s ease, color 0.13s ease, transform 0.13s ease;
+}
+.board-card:hover .card-launch { opacity: 1; }
+.card-launch:hover { background: var(--blue); color: #06121f; transform: scale(1.12); }
+
+/* add card / list */
+.board-add-card { background: transparent; border: none; color: var(--muted); text-align: left; padding: 7px 10px; font-size: 12px; flex: none; border-radius: 8px; transition: color 0.12s ease, background 0.12s ease; }
+.board-add-card:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .board-add { padding: 8px; }
-.board-add textarea { width: 100%; background: var(--panel); border: 1px solid var(--border2); border-radius: 6px; padding: 6px; color: var(--text); resize: vertical; min-height: 48px; outline: none; font-family: inherit; font-size: 12.5px; }
+.board-add textarea { width: 100%; background: var(--panel); border: 1px solid var(--border2); border-radius: 8px; padding: 8px; color: var(--text); resize: vertical; min-height: 52px; outline: none; font-family: inherit; font-size: 12.5px; transition: border-color 0.12s ease; }
 .board-add textarea:focus { border-color: var(--accent); }
 .board-add-row { display: flex; gap: 6px; margin-top: 6px; }
-.board-add-row button { background: #1a2740; border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
-.board-add-col { flex: none; width: 220px; align-self: flex-start; background: rgba(255,255,255,0.03); border: 1px dashed var(--border2); border-radius: 10px; color: var(--muted); padding: 12px; font-size: 13px; text-align: left; }
-.board-add-col:hover { color: var(--text); border-color: var(--accent); }
+.board-add-row button { background: #1a2740; border: 1px solid var(--border2); border-radius: 7px; padding: 5px 12px; font-size: 12px; transition: background 0.12s ease; }
+.board-add-row button:hover { background: #21304d; }
+.board-add-col { flex: none; width: 230px; align-self: flex-start; background: rgba(255,255,255,0.03); border: 1px dashed var(--border2); border-radius: 12px; color: var(--muted); padding: 13px; font-size: 13px; text-align: left; transition: color 0.13s ease, border-color 0.13s ease, background 0.13s ease; }
+.board-add-col:hover { color: var(--text); border-color: var(--accent); background: rgba(155,180,255,0.05); }
 
 /* card editor modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; z-index: 60; }
-.modal { width: 520px; max-width: 92vw; background: var(--panel); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; z-index: 60; animation: overlay-in 0.15s ease; }
+.modal { width: 520px; max-width: 92vw; background: var(--panel); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: modal-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1); }
 .modal-title { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 16px; font-weight: 600; padding: 6px 2px; outline: none; }
 .type-row { display: flex; gap: 6px; margin: 12px 0; }
-.type-row .ctag { cursor: pointer; opacity: 0.45; border: 1px solid transparent; }
+.type-row .ctag { cursor: pointer; opacity: 0.45; border: 1px solid transparent; transition: opacity 0.12s ease, outline-color 0.12s ease; }
+.type-row .ctag:hover { opacity: 0.8; }
 .type-row .ctag.on { opacity: 1; outline: 1px solid currentColor; }
 .modal-body { width: 100%; min-height: 140px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; color: var(--text); resize: vertical; outline: none; font-family: inherit; font-size: 13px; margin-bottom: 12px; }
 .modal-body:focus { border-color: var(--accent); }
 .modal-actions { display: flex; align-items: center; gap: 8px; }
-.modal-actions button { background: #1a2740; border: 1px solid var(--border2); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--text); }
+.modal-actions button { background: #1a2740; border: 1px solid var(--border2); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--text); transition: background 0.12s ease, border-color 0.12s ease; }
+.modal-actions button:hover:not(:disabled) { background: #21304d; }
 .modal-actions .ghost { background: transparent; }
 .modal-actions .danger { background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.3); color: var(--red); }
+.modal-actions .danger:hover:not(:disabled) { background: rgba(255,107,107,0.2); }
 .modal-actions .primary { background: #1a2740; border-color: var(--accent); color: var(--text); }
 .modal-actions button:disabled { opacity: 0.45; cursor: default; }
 
 /* launch a session from a card */
-.board-card { position: relative; }
-.card-launch { position: absolute; top: 6px; right: 6px; opacity: 0; color: var(--blue); font-size: 10px; cursor: pointer; background: var(--panel2); border: 1px solid var(--border2); border-radius: 5px; padding: 1px 7px; line-height: 1.5; }
-.board-card:hover .card-launch { opacity: 1; }
-.card-launch:hover { background: #1a2740; color: var(--text); }
 .launch-head { font-size: 13px; margin-bottom: 10px; color: var(--muted); }
 .launch-prompt { min-height: 200px; }
 .launch-warn { color: var(--amber); margin: -6px 0 12px; }
+
+/* board animations */
+@keyframes card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes drop-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .board-card, .board-col, .board-add-col, .card-launch, .modal, .modal-overlay, .drop-line { animation: none !important; transition: none !important; }
+  .board-card:hover { transform: none; }
+}
 
 .tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .tree-head { padding: 8px 10px; border-bottom: 1px solid var(--border); flex: none; }
