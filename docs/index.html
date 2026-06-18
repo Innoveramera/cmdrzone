@@ -1,0 +1,367 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Fredrik Hammarström -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CmdrZone — one command center for every project & AI agent</title>
+  <meta name="description" content="A macOS-first desktop command center for developers juggling many projects and AI coding agents. Embedded Claude Code terminals, a per-project Kanban board, a Monaco editor and durable sessions — in one window, so you never prompt the wrong project." />
+  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="canonical" href="https://innoveramera.github.io/cmdrzone/" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="CmdrZone — Project Command Center" />
+  <meta property="og:description" content="Replace a wall of terminal tabs with one window: a live tree of every project and per-project AI-agent terminals, a Kanban board, an editor and durable sessions." />
+  <meta property="og:url" content="https://innoveramera.github.io/cmdrzone/" />
+  <meta property="og:image" content="./logo.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="theme-color" content="#07080c" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body>
+  <a href="#features" class="btn" style="position:absolute;left:-9999px;top:0" onfocus="this.style.left='1rem';this.style.top='1rem';this.style.zIndex='100'" onblur="this.style.left='-9999px'">Skip to content</a>
+
+  <!-- ───────── Nav ───────── -->
+  <header class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="./index.html" aria-label="CmdrZone home">
+        <img src="./logo.svg" alt="" />
+        <span>Cmdr<span class="z">Zone</span></span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#shortcuts">Shortcuts</a>
+        <a href="#start">Quick start</a>
+        <a href="./docs.html">Docs</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-primary" href="https://github.com/Innoveramera/cmdrzone" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.42.37.8 1.1.8 2.22v3.29c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ───────── Hero ───────── -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow reveal"><span class="dot"></span> macOS · command center</span>
+          <h1 class="reveal" style="animation-delay:.08s">
+            Drive every project<br />from <span class="grad">one window.</span>
+          </h1>
+          <p class="lede reveal" style="animation-delay:.16s">
+            CmdrZone replaces a messy wall of terminal tabs with a single command center —
+            a live tree of every project and embedded <strong style="color:var(--text)">Claude&nbsp;Code</strong> agents,
+            so you never prompt the wrong one.
+          </p>
+          <div class="hero-cta reveal" style="animation-delay:.24s">
+            <a class="btn btn-primary" href="https://github.com/Innoveramera/cmdrzone" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.42.37.8 1.1.8 2.22v3.29c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+              View on GitHub
+              <span class="arrow">→</span>
+            </a>
+            <a class="btn" href="./docs.html">Read the docs</a>
+          </div>
+          <div class="hero-meta reveal" style="animation-delay:.32s">
+            <span><b>macOS</b> · Apple Silicon</span>
+            <span><b>GPL-3.0</b> · open source</span>
+            <span><b>Electron</b> · React · TS</span>
+          </div>
+        </div>
+
+        <!-- App window mockup -->
+        <div class="mock reveal" style="animation-delay:.18s" aria-hidden="true">
+          <div class="mock-bar">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <span class="title">CmdrZone — ~/Development</span>
+          </div>
+          <div class="mock-body">
+            <aside class="mock-side">
+              <div class="lbl">Projects</div>
+              <div class="proj"><span class="pdot" style="background:#6c8cff"></span><span class="pname">cmdrzone</span><span class="badge">3</span></div>
+              <div class="proj active"><span class="pdot" style="background:#5be59b"></span><span class="pname">acme-web</span><span class="sdot work"></span></div>
+              <div class="proj"><span class="pdot" style="background:#ffc46b"></span><span class="pname">billing-api</span><span class="sdot wait"></span></div>
+              <div class="proj"><span class="pdot" style="background:#c08bff"></span><span class="pname">design-system</span></div>
+              <div class="proj"><span class="pdot" style="background:#ff7a85"></span><span class="pname">infra-monorepo</span></div>
+            </aside>
+            <div class="mock-main">
+              <div class="mock-tabs">
+                <span class="on">Terminals</span><span>Editor</span><span>Board</span><span>Info</span>
+              </div>
+              <div class="term" id="term">
+                <div><span class="path">acme-web</span> <span class="pmt">❯</span> claude</div>
+                <div class="dim">✻ Welcome back — resuming session</div>
+                <div class="pmt" id="term-type"><span class="pmt">❯</span> <span id="term-cmd"></span><span class="cursor"></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="float-card">
+            <span class="pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 5v14l11-7z"/></svg></span>
+            <div>
+              <b>Launched from a card</b>
+              <span>Board → In&nbsp;Progress</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── Why ───────── -->
+    <section class="section why">
+      <div class="wrap">
+        <div class="why-card reveal">
+          <div class="big">
+            Running 5+ projects, each with its own agent in a separate tab, gets messy fast —
+            <em>wrong-tab prompts, no overview, lost sessions.</em>
+          </div>
+          <div>
+            <p>CmdrZone gives you one place to see and drive them all. A stable color and live status per project mean a glance tells you what's working, what's waiting on you, and what's done.</p>
+            <p>Every terminal runs a real PTY with your full login-shell <code class="kbd-inline">PATH</code> — so <code class="kbd-inline">claude</code>, node and pnpm just work, every time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── Features (bento) ───────── -->
+    <section class="section" id="features">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Everything in one window</span>
+          <h2 style="margin-top:.8rem">A command center, not a tab graveyard</h2>
+          <p>Terminals, editor, board, and git status — per project, with the agent context built in.</p>
+        </div>
+
+        <div class="bento">
+          <!-- big feature 1 -->
+          <article class="card feature reveal">
+            <div class="idx">01 / AGENTS</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+            </div>
+            <h3>Embedded agent terminals</h3>
+            <p>Launch <strong style="color:var(--text)">Claude&nbsp;Code</strong> (default) or Aider / Codex / Gemini / opencode per project, in real PTYs with your full login-shell PATH. Resume the last conversation in one click with <code>claude --continue</code>.</p>
+          </article>
+
+          <!-- big feature 2 -->
+          <article class="card feature reveal" style="transition-delay:.06s">
+            <div class="idx">02 / BOARD</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="14" rx="1"/></svg>
+            </div>
+            <h3>Board → launch from a card</h3>
+            <p>A per-project Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with drag-and-drop cards, persisted in SQLite. Hit <span class="kbd-inline">▶</span> on a card to open a Claude session seeded with its title — the card slides to <em>In&nbsp;Progress</em>.</p>
+          </article>
+
+          <!-- tree -->
+          <article class="card wide reveal">
+            <div class="idx">03 / PROJECTS</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h7l2 2h9v12H3z"/><path d="M3 9h18"/></svg>
+            </div>
+            <h3>Live project tree</h3>
+            <p>Every project (and monorepo sub-project) under a root folder you pick — with favorites, a stable per-project color, git dirty count, and live agent indicators. Double-click a name to rename the folder on disk.</p>
+          </article>
+
+          <!-- durable -->
+          <article class="card wide reveal" style="transition-delay:.06s">
+            <div class="idx">04 / TMUX</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+            </div>
+            <h3>Durable sessions</h3>
+            <p>When <code>tmux</code> is on your PATH, each terminal attaches to a detached session. Quit the app — your agents keep running — and they <strong style="color:var(--text)">reattach</strong> on next launch. Closing a tab is the only thing that kills a session.</p>
+          </article>
+
+          <!-- editor -->
+          <article class="card reveal">
+            <div class="idx">05</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 4v4h4"/><path d="M8 13l2 2-2 2"/><path d="M13 17h3"/></svg>
+            </div>
+            <h3>Monaco editor</h3>
+            <p>A Files + Monaco (VS Code's editor) tab with multi-file tabs, IntelliSense, minimap and save.</p>
+          </article>
+
+          <!-- awareness -->
+          <article class="card reveal" style="transition-delay:.06s">
+            <div class="idx">06</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            </div>
+            <h3>Agent awareness</h3>
+            <p>Per-project status (working / waiting / done / error), an activity rail, and native notifications when an agent needs you or finishes.</p>
+          </article>
+
+          <!-- info -->
+          <article class="card reveal" style="transition-delay:.12s">
+            <div class="idx">07</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </div>
+            <h3>Project info</h3>
+            <p>README / CLAUDE.md preview, <code>package.json</code> scripts as one-click run buttons, git status, dev-server port detection and <code>.env</code> presence.</p>
+          </article>
+
+          <!-- cli -->
+          <article class="card reveal" style="transition-delay:.18s">
+            <div class="idx">08</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9l3 3-3 3"/><path d="M12 15h5"/></svg>
+            </div>
+            <h3>Agent CLI &amp; MCP</h3>
+            <p>A <code>cmdrzone</code> CLI and an MCP server let agents file and move board cards themselves — straight against the SQLite store, no GUI needed.</p>
+          </article>
+
+          <!-- split -->
+          <article class="card wide reveal">
+            <div class="idx">09 / KEYBOARD-FIRST</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+            </div>
+            <h3>Split panes &amp; ⌘K everything</h3>
+            <p>Split any tab into row/column panes — each its own live PTY. A <span class="kbd-inline">⌘K</span> fuzzy switcher, dashboard, pinned-project jumps and new-terminal shortcuts keep your hands on the keyboard.</p>
+          </article>
+
+          <!-- model agnostic -->
+          <article class="card wide reveal" style="transition-delay:.06s">
+            <div class="idx">10 / EXTENSIBLE</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 18.8 7.2 17l.9-5.4L4.2 7.7l5.4-.8z"/></svg>
+            </div>
+            <h3>Model-agnostic, Claude-first</h3>
+            <p>Agents are just launch recipes — add your own. Defaults to Claude Code, but anything you run from a shell can be a one-click agent.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── Shortcuts ───────── -->
+    <section class="section" id="shortcuts">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Hands on the keys</span>
+          <h2 style="margin-top:.8rem">Keyboard-first by design</h2>
+        </div>
+        <div class="keys reveal">
+          <div class="keyrow"><kbd>⌘</kbd><kbd>K</kbd><span class="label">Fuzzy project switcher</span></div>
+          <div class="keyrow"><kbd>⌘</kbd><kbd>0</kbd><span class="label">Dashboard</span></div>
+          <div class="keyrow"><kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd><span class="label">Jump to pinned project</span></div>
+          <div class="keyrow"><kbd>⌘</kbd><kbd>T</kbd><span class="label">New terminal</span></div>
+          <div class="keyrow"><kbd>⌘</kbd><kbd>D</kbd><span class="label">Split pane</span></div>
+          <div class="keyrow"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>D</kbd><span class="label">Split the other way</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── Quick start ───────── -->
+    <section class="section" id="start">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Get running</span>
+          <h2 style="margin-top:.8rem">Quick start</h2>
+          <p>macOS · Node ≥ 20 · pnpm ≥ 10 · Xcode Command Line Tools. Clone, install, rebuild native modules, run.</p>
+        </div>
+        <div class="code reveal" style="max-width:760px">
+          <div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="fn">zsh — setup</span></div>
+          <div class="cmdlist">
+            <div class="cmdrow"><span class="pmt">❯</span><span class="txt">git clone https://github.com/Innoveramera/cmdrzone.git</span><button class="copy" data-copy="git clone https://github.com/Innoveramera/cmdrzone.git">Copy</button></div>
+            <div class="cmdrow"><span class="pmt">❯</span><span class="txt">cd cmdrzone &amp;&amp; pnpm install</span><button class="copy" data-copy="cd cmdrzone && pnpm install">Copy</button></div>
+            <div class="cmdrow"><span class="pmt">❯</span><span class="txt">pnpm rebuild:native&nbsp;&nbsp;<span class="cmt"># rebuild node-pty + better-sqlite3</span></span><button class="copy" data-copy="pnpm rebuild:native">Copy</button></div>
+            <div class="cmdrow"><span class="pmt">❯</span><span class="txt">pnpm dev<span class="cmt">&nbsp;&nbsp;# launch with hot reload</span></span><button class="copy" data-copy="pnpm dev">Copy</button></div>
+          </div>
+        </div>
+        <p class="reveal" style="color:var(--faint);font-family:var(--mono);font-size:.82rem;margin-top:1rem">
+          Full install, packaging &amp; daily-use instructions →
+          <a href="./docs.html#install" style="color:var(--accent);border-bottom:1px solid rgba(143,182,255,.3)">the docs</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ───────── Stack ───────── -->
+    <section class="section" style="padding-top:1rem">
+      <div class="wrap">
+        <div class="section-head reveal" style="margin-bottom:1.6rem">
+          <span class="eyebrow">Built with</span>
+        </div>
+        <div class="chips reveal">
+          <span class="chip">Electron</span>
+          <span class="chip">electron-vite</span>
+          <span class="chip">React + TypeScript</span>
+          <span class="chip">node-pty + xterm.js</span>
+          <span class="chip">Monaco Editor</span>
+          <span class="chip">better-sqlite3</span>
+          <span class="chip">tmux</span>
+          <span class="chip">pnpm workspace</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── CTA ───────── -->
+    <section class="section">
+      <div class="wrap">
+        <div class="cta reveal">
+          <span class="eyebrow" style="justify-content:center"><span class="dot"></span> built in the open</span>
+          <h2 style="margin-top:1rem">Stop hunting for the right tab.</h2>
+          <p>CmdrZone is early but functional, GPL-3.0, and developed in public. Star it, file an issue, or send a PR.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="https://github.com/Innoveramera/cmdrzone" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.42.37.8 1.1.8 2.22v3.29c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+              Star on GitHub
+              <span class="arrow">→</span>
+            </a>
+            <a class="btn" href="./docs.html">Explore the docs</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ───────── Footer ───────── -->
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <a class="brand" href="./index.html"><img src="./logo.svg" alt="" /><span>Cmdr<span class="z">Zone</span></span></a>
+          <p class="tag">A macOS-first command center for developers who juggle many projects and AI coding agents.</p>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Project</h4>
+            <a href="https://github.com/Innoveramera/cmdrzone" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://github.com/Innoveramera/cmdrzone/issues" target="_blank" rel="noopener">Issues</a>
+            <a href="https://github.com/Innoveramera/cmdrzone/releases" target="_blank" rel="noopener">Releases</a>
+          </div>
+          <div class="footer-col">
+            <h4>Docs</h4>
+            <a href="./docs.html">Overview</a>
+            <a href="./docs.html#install">Install</a>
+            <a href="./docs.html#cli">CLI &amp; MCP</a>
+            <a href="./docs.html#architecture">Architecture</a>
+          </div>
+          <div class="footer-col">
+            <h4>Community</h4>
+            <a href="https://github.com/Innoveramera/cmdrzone/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+            <a href="https://github.com/Innoveramera/cmdrzone/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">Code of Conduct</a>
+            <a href="https://github.com/Innoveramera/cmdrzone/blob/main/LICENSE" target="_blank" rel="noopener">License (GPL-3.0)</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-base">
+        <span>© 2026 Fredrik Hammarström · GPL-3.0-or-later</span>
+        <span>Built in the open · Claude-first</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./assets/app.js"></script>
+</body>
+</html>
