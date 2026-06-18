@@ -30,6 +30,15 @@ export function getBoard(projectPath: string): BoardData {
   return { columns, cards }
 }
 
+export function getCard(id: string): BoardCard | undefined {
+  const row = getDb()
+    .prepare(
+      'SELECT id, project_path AS projectPath, column_id AS columnId, title, body, type, position, created_at AS createdAt, updated_at AS updatedAt FROM board_cards WHERE id = ?'
+    )
+    .get(id) as BoardCard | undefined
+  return row ? { ...row, body: row.body ?? '' } : undefined
+}
+
 export function saveCard(card: BoardCard): void {
   getDb()
     .prepare(

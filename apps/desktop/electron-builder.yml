@@ -12,15 +12,27 @@ npmRebuild: false
 files:
   - out/**
   - package.json
+# Ship the changelog into the app bundle so the renderer can show "What's New" at runtime
+# (read from process.resourcesPath in production; from the repo root in dev).
+extraResources:
+  - from: ../../CHANGELOG.md
+    to: CHANGELOG.md
 asarUnpack:
   - '**/*.node'
   - '**/node_modules/better-sqlite3/**'
   - '**/node_modules/node-pty/**'
+# electron-updater reads GitHub Releases; release assets are published by the Release workflow.
+publish:
+  provider: github
+  owner: Innoveramera
+  repo: cmdrzone
 mac:
   category: public.app-category.developer-tools
   icon: build/icon.png
+  # electron-updater needs a zip for macOS in-place updates (the dmg is for first install).
   target:
     - dmg
+    - zip
   # Ad-hoc signing for local builds. For distribution, set identity to your Apple
   # Developer ID and provide notarization credentials (APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID).
   identity: null

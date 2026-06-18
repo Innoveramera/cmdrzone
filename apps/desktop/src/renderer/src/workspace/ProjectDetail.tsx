@@ -19,6 +19,12 @@ export function ProjectDetail({ project }: { project: ProjectNode }) {
     <div className="detail-pane">
       <div className="detail-tabs">
         <button
+          className={`dtab ${mode === 'board' ? 'on' : ''}`}
+          onClick={() => useStore.getState().setDetailMode('board')}
+        >
+          📋 Board
+        </button>
+        <button
           className={`dtab ${mode === 'terminals' ? 'on' : ''}`}
           onClick={() => useStore.getState().setDetailMode('terminals')}
         >
@@ -29,12 +35,6 @@ export function ProjectDetail({ project }: { project: ProjectNode }) {
           onClick={() => useStore.getState().setDetailMode('editor')}
         >
           📝 Editor
-        </button>
-        <button
-          className={`dtab ${mode === 'board' ? 'on' : ''}`}
-          onClick={() => useStore.getState().setDetailMode('board')}
-        >
-          📋 Board
         </button>
       </div>
 

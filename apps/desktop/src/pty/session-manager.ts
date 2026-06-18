@@ -7,6 +7,8 @@
 import * as pty from 'node-pty'
 import os from 'node:os'
 import { composeEnv } from '@core/env/shell-path'
+import { hasSession, newSessionArgs, sendKeys, type TmuxCtx, type TmuxRef } from '@core/tmux/tmux'
+import { tmuxSessionName } from '@shared/tmux'
 import type { PtyCreateOptions } from '@shared/ipc'
 
 interface Session {
@@ -27,6 +29,7 @@ async function ensureEnv() {
 
 export async function createSession(
   opts: PtyCreateOptions,
+  tmuxRef: TmuxRef | null,
   onData: DataHandler,
   onExit: ExitHandler
 ): Promise<void> {
@@ -40,8 +43,37 @@ export async function createSession(
     env: { ...env }
   }
 
-  // Either spawn a process directly (argv → no shell escaping, multi-line safe; used to seed an
-  // agent with a prompt), or a LOGIN + INTERACTIVE shell so dotfiles load and PATH matches iTerm.
+  // Durable path: the PTY is a tmux *client*; the shell/agent runs inside a session on a
+  // detached server, so it survives app reload/quit. `-A` attaches if the session already
+  // exists (reattach after restart) or creates it. On a fresh create we still seed the agent;
+  // on reattach we must NOT re-seed (it's already running), so we check first.
+  if (tmuxRef && process.platform !== 'win32') {
+    const ctx: TmuxCtx = { ...tmuxRef, env }
+    const name = tmuxSessionName(opts.id)
+    const existed = await hasSession(ctx, name)
+    // Fresh spawn-mode session runs the agent directly (multi-line-safe argv); reattach ignores it.
+    const seedSpawn = !existed ? opts.spawn : undefined
+    const args = newSessionArgs(ctx, name, dims.cols, dims.rows, seedSpawn)
+    const proc = pty.spawn(ctx.bin, args, dims)
+    sessions.set(opts.id, { id: opts.id, proc })
+    proc.onData((data) => onData(opts.id, data))
+    proc.onExit(({ exitCode, signal }) => {
+      sessions.delete(opts.id)
+      onExit(opts.id, exitCode, signal)
+    })
+    // Inject-mode agent launch into a fresh interactive shell: wait for shell init, then type it.
+    if (!existed && !opts.spawn && opts.initialCommand) {
+      const cmd = opts.initialCommand
+      setTimeout(() => {
+        if (sessions.has(opts.id)) void sendKeys(ctx, name, cmd)
+      }, 400)
+    }
+    return
+  }
+
+  // Non-durable fallback (tmux unavailable / disabled). Either spawn a process directly
+  // (argv → no shell escaping, multi-line safe; used to seed an agent with a prompt), or a
+  // LOGIN + INTERACTIVE shell so dotfiles load and PATH matches iTerm.
   const proc = opts.spawn
     ? pty.spawn(opts.spawn.command, opts.spawn.args, dims)
     : pty.spawn(shell, process.platform === 'win32' ? [] : ['-l', '-i'], dims)

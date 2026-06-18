@@ -29,6 +29,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
   const activeGid = useStore((s) => s.activeGroupByProject[projectId])
   const agents = useStore((s) => s.agents)
   const project = useStore((s) => s.findProject(projectId))
+  const durable = useStore((s) => s.durable)
 
   const myGroups = groupOrder
     .map((g) => groups[g])
@@ -57,6 +58,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
 
   const newAgent = (resume = false) => useStore.getState().newTerminal(projectId, agentOpts(resume))
   const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
+  const agentName = resolveProvider()?.name ?? 'Claude'
 
   return (
     <div className="deck">
@@ -76,8 +78,8 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
               <span className="tab-title">
                 {active?.kind === 'agent' ? '🤖 ' : active?.kind === 'devserver' ? '▷ ' : '$ '}
                 {active?.title}
-                {g.paneIds.length > 1 ? ` ⊞${g.paneIds.length}` : ''}
               </span>
+              {g.paneIds.length > 1 && <span className="tab-badge">⊞{g.paneIds.length}</span>}
               <span
                 className="tab-x"
                 onClick={(e) => {
@@ -90,19 +92,42 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
             </button>
           )
         })}
-        <button className="tab add" onClick={() => newAgent(false)} title="New Claude session">
-          ＋🤖
+        <span className="tabstrip-div" />
+        <button
+          className="tab add"
+          onClick={() => newAgent(false)}
+          title={`New ${agentName} session`}
+        >
+          ＋ 🤖 {agentName}
         </button>
         <button
           className="tab add"
           onClick={() => newAgent(true)}
-          title="Resume last Claude session (claude --continue)"
+          title={`Resume last ${agentName} session (--continue)`}
         >
-          ⟳
+          ↻ Resume
         </button>
         <button className="tab add" onClick={newShell} title="New shell">
-          ＋$
+          ＋ $ Shell
         </button>
+        <span className="spacer" />
+        {durable?.available ? (
+          <button
+            className={`durable-pill ${durable.enabled ? 'on' : 'off'}`}
+            onClick={() => void useStore.getState().toggleDurable()}
+            title={
+              durable.enabled
+                ? 'Durable sessions ON — agents survive reload & quit (running in tmux). Click to disable.'
+                : 'Durable sessions OFF — sessions end when the app closes. Click to enable.'
+            }
+          >
+            ⛓ {durable.enabled ? 'Durable' : 'Off'}
+          </button>
+        ) : (
+          <span className="durable-pill missing" title="Install tmux (brew install tmux) for sessions that survive reload & quit.">
+            ⛓ no tmux
+          </span>
+        )}
       </div>
 
       <div className="deck-body">

@@ -1,0 +1,48 @@
+name: Release
+
+# Build + publish a GitHub Release when a version tag is pushed (e.g. `v0.1.0`).
+# electron-builder uploads the DMG, the update zip, and latest-mac.yml (the metadata
+# the in-app updater reads). Keep the tag in sync with apps/desktop/package.json's version.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# electron-builder needs write access to create the release and upload assets.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm version comes from the "packageManager" field in package.json
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # node-gyp needs Python's distutils, removed from the stdlib in 3.12+.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Rebuild native modules for Electron
+        run: pnpm rebuild:native
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Builds the renderer/main/preload and publishes the release via electron-builder.
+      # GH_TOKEN authenticates the upload to GitHub Releases.
+      - name: Build and publish
+        run: pnpm --filter @cmdrzone/desktop release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

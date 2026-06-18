@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { app, BrowserWindow, ipcMain, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
+import { app, BrowserWindow, clipboard, ipcMain, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
 import { join, basename } from 'node:path'
+import { writeFileSync } from 'node:fs'
 import os from 'node:os'
 import { IPC } from '@shared/ipc'
 import type {
@@ -12,7 +13,9 @@ import type {
   PtyDisposePayload
 } from '@shared/ipc'
 import type { EnvProbeResult, ProjectNode, BoardCard, BoardColumn } from '@shared/types'
+import { TMUX_SOCKET, tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import { composeEnv } from '@core/env/shell-path'
+import { buildConf, listSessions, killSession, type TmuxCtx, type TmuxRef } from '@core/tmux/tmux'
 import { initDatabase, closeDatabase, getDb } from '@core/persistence/database'
 import { scanProjects } from '@core/projects/scanner'
 import { gitStatus } from '@core/projects/git'
@@ -27,6 +30,13 @@ import {
   saveColumn as boardSaveColumn,
   deleteColumn as boardDeleteColumn
 } from '@core/board/board'
+import {
+  initUpdater,
+  checkForUpdates,
+  getUpdateState,
+  quitAndInstall,
+  getChangelog
+} from './updater'
 
 // Set the app name early (before userData paths/menus are derived). Dev uses a SEPARATE name so
 // its data store (~/Library/Application Support/CmdrZone Dev) is isolated from the installed app's
@@ -55,6 +65,31 @@ let win: BrowserWindow | null = null
 let ptyHost: UtilityProcess | null = null
 const livePtys = new Set<string>()
 let allowQuit = false
+
+// Durable-session (tmux) state. `tmuxRef` is null when tmux isn't installed → sessions run the
+// classic non-durable way and everything below degrades to no-ops.
+let tmuxRef: TmuxRef | null = null
+let tmuxEnv: NodeJS.ProcessEnv = {}
+
+/** Detect tmux and write our config once. Safe to call when tmux is absent (leaves ref null). */
+async function setupTmux(): Promise<void> {
+  try {
+    const c = await composeEnv(['tmux'])
+    const bin = c.resolved.tmux
+    if (!bin) return
+    const conf = join(app.getPath('userData'), 'tmux.conf')
+    writeFileSync(conf, buildConf(c.shell), 'utf8')
+    tmuxRef = { bin, socket: TMUX_SOCKET, conf }
+    tmuxEnv = c.env
+  } catch {
+    tmuxRef = null
+  }
+}
+
+const tmuxCtx = (): TmuxCtx | null => (tmuxRef ? { ...tmuxRef, env: tmuxEnv } : null)
+const durableSetting = (): boolean => getSetting('durableSessions', '1') === '1'
+const durableEnabled = (): boolean => !!tmuxRef && durableSetting()
+const durableStatus = (): DurableStatus => ({ available: !!tmuxRef, enabled: durableEnabled() })
 
 function startPtyHost(): void {
   ptyHost = utilityProcess.fork(join(__dirname, 'pty-host.js'))
@@ -138,11 +173,15 @@ function createWindow(): void {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // (Re)point the updater at the current window — covers macOS recreating it on reactivate.
+  initUpdater(win)
 }
 
 function registerIpc(): void {
   ipcMain.handle(IPC.ptyCreate, (_e, opts: PtyCreateOptions) => {
-    ptyHost?.postMessage({ type: 'create', payload: opts })
+    // When durable, hand the host a tmux ref so it attaches-or-creates a persistent session.
+    ptyHost?.postMessage({ type: 'create', payload: opts, tmux: durableEnabled() ? tmuxRef : undefined })
   })
 
   ipcMain.on(IPC.ptyInput, (_e, p: PtyInputPayload) => {
@@ -153,8 +192,26 @@ function registerIpc(): void {
     ptyHost?.postMessage({ type: 'resize', id: p.id, cols: p.cols, rows: p.rows })
   })
 
+  // Detach: tear down the client view. A durable session keeps running on the tmux server.
   ipcMain.on(IPC.ptyDispose, (_e, p: PtyDisposePayload) => {
     ptyHost?.postMessage({ type: 'dispose', id: p.id })
+  })
+
+  // Destroy for good: the user closed the tab, so kill the durable session too (idempotent).
+  ipcMain.on(IPC.ptyKill, (_e, p: { id: string }) => {
+    const ctx = tmuxCtx()
+    if (ctx) void killSession(ctx, tmuxSessionName(p.id))
+    ptyHost?.postMessage({ type: 'dispose', id: p.id })
+  })
+
+  ipcMain.handle(IPC.durableStatus, (): DurableStatus => durableStatus())
+  ipcMain.handle(IPC.durableSetEnabled, (_e, enabled: boolean): DurableStatus => {
+    setSetting('durableSessions', enabled ? '1' : '0')
+    return durableStatus()
+  })
+  ipcMain.handle(IPC.durableList, async (): Promise<string[]> => {
+    const ctx = tmuxCtx()
+    return ctx ? listSessions(ctx) : []
   })
 
   ipcMain.handle(IPC.envProbe, async (): Promise<EnvProbeResult> => {
@@ -226,6 +283,18 @@ function registerIpc(): void {
     return roots
   })
 
+  ipcMain.handle(IPC.appGetVersion, () => app.getVersion())
+  ipcMain.handle(IPC.updateCheck, () => checkForUpdates())
+  ipcMain.handle(IPC.updateGetState, () => getUpdateState())
+  ipcMain.handle(IPC.changelogGet, () => getChangelog())
+  ipcMain.on(IPC.updateInstall, () => quitAndInstall())
+
+  // Clipboard goes through the main process (the sandboxed renderer can't read the
+  // clipboard via navigator.clipboard without a permission prompt). Used by the
+  // terminal's ⌘C / ⌘V handlers.
+  ipcMain.on(IPC.clipboardWrite, (_e, text: string) => clipboard.writeText(text))
+  ipcMain.handle(IPC.clipboardRead, () => clipboard.readText())
+
   ipcMain.on(IPC.revealInFinder, (_e, p: string) => shell.showItemInFolder(p))
   ipcMain.on(IPC.openExternal, (_e, url: string) => {
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
@@ -294,10 +363,11 @@ async function runSmoke(): Promise<void> {
   app.quit()
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   initDatabase(join(app.getPath('userData'), 'cmdrzone.db'))
   startPtyHost()
   registerIpc()
+  await setupTmux()
 
   if (process.env.SB_SMOKE) {
     void runSmoke()
@@ -351,7 +421,9 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', (e) => {
-  if (!allowQuit && livePtys.size > 0 && win && !win.isDestroyed()) {
+  // With durable sessions on, quitting only detaches — agents keep running in the background
+  // tmux server and reattach next launch — so there's nothing to warn about.
+  if (!allowQuit && !durableEnabled() && livePtys.size > 0 && win && !win.isDestroyed()) {
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning',
       buttons: ['Quit anyway', 'Cancel'],

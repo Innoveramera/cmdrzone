@@ -36,6 +36,8 @@ drive them all.
   drag-and-drop cards and notes, persisted in SQLite — track what to build/fix per project.
   **Launch a Claude session straight from a card** (▶): its title/body seed the prompt (editable
   preview first), the session opens in the Terminals tab, and the card slides to "In Progress".
+- **Agent CLI / MCP** — a `cmdrzone` CLI and an MCP server let AI agents create and manage board
+  cards themselves (no GUI), straight against the SQLite store. See [Agent CLI / MCP](#agent-cli--mcp--let-agents-manage-the-board).
 - **Project info** — README / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity
@@ -90,6 +92,40 @@ The installed app stores data in `~/Library/Application Support/CmdrZone`, **sep
 `pnpm dev` — which runs as **"CmdrZone Dev"** with its own data store — so development never
 disturbs your daily setup. First launch of the unsigned build: right-click → Open.
 
+## Agent CLI / MCP — let agents manage the board
+
+A CLI and an MCP server let AI agents (and you) create and manage **board cards** without the GUI —
+e.g. a Claude session files a `bug`/`feature`/`task` card when it finishes a piece of work. Both
+talk straight to the same SQLite store (`cmdrzone.db`) via the shared command core, and run under
+`ELECTRON_RUN_AS_NODE` so they reuse the Electron-ABI `better-sqlite3` — no app needs to be running
+and no extra native build is required. Changes appear in an open board when its window regains focus.
+
+Build the tool bundles once (`pnpm build` emits `apps/desktop/out/{cli,mcp}.cjs`), then:
+
+```bash
+node bin/cmdrzone.mjs projects list
+node bin/cmdrzone.mjs card add --project myapp --column Ideas --title "Add dark mode" --type feature
+node bin/cmdrzone.mjs board show --project myapp --json
+```
+
+`--project` takes a project **name** or absolute **path**; `--column` a name or id. Global flags:
+`--json`, `--db <path>`, and `--dev` (target the *CmdrZone Dev* data store instead of the installed
+*CmdrZone*; or set `CMDRZONE_INSTANCE=dev` / `CMDRZONE_DB=<path>`). Run `node bin/cmdrzone.mjs --help`
+for the full command list (`card add|update|move|rm`, `column add|rename|rm`).
+
+**MCP** — point any MCP client (Claude Code/Desktop) at the launcher:
+
+```jsonc
+{ "mcpServers": { "cmdrzone": {
+  "command": "node",
+  "args": ["<repo>/bin/cmdrzone-mcp.mjs"],
+  "env": { "CMDRZONE_INSTANCE": "daily" }   // or "dev"
+}}}
+```
+
+Tools: `list_projects`, `get_board`, `create_card`, `update_card`, `move_card`, `delete_card`,
+`create_column`, `rename_column`, `delete_column`.
+
 ## Architecture
 
 ```
@@ -104,6 +140,26 @@ apps/desktop/src/
 
 `core` / `pty` / `shared` import nothing from Electron, so they stay portable. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for dev details and headless smoke checks.
+
+## Releases & updates
+
+The app checks GitHub Releases for newer builds in the background and surfaces the result in the
+sidebar footer (version label → **What's New**, plus a *Check for updates* action). The first time
+a new version runs, **What's New** opens automatically, reading its notes from
+[`CHANGELOG.md`](CHANGELOG.md) (one `## [version]` section per release).
+
+Cutting a release:
+
+1. Bump `version` in `apps/desktop/package.json` and add a `## [x.y.z]` section to `CHANGELOG.md`.
+2. Push a matching tag: `git tag v0.1.0 && git push origin v0.1.0`.
+3. `.github/workflows/release.yml` builds and publishes the GitHub Release (DMG + update zip +
+   `latest-mac.yml`, the metadata the in-app updater reads).
+
+**macOS in-place install requires signing.** Squirrel only swaps an app that's Developer ID-signed
++ notarized. Until that's set up (`mac.identity` in `electron-builder.yml` + notarization creds),
+the updater runs in *notify* mode: it still detects new versions and opens the release page for a
+manual download. Once signing is configured, run with `CMDRZONE_AUTO_INSTALL=1` (or flip
+`AUTO_INSTALL` in `src/main/updater.ts`) to enable background download + **Restart to update**.
 
 ## Roadmap
 

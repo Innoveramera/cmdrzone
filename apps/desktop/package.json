@@ -1,6 +1,6 @@
 {
   "name": "@cmdrzone/desktop",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "CmdrZone — Project Command Center (desktop app)",
   "license": "GPL-3.0-or-later",
@@ -8,18 +8,21 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "node ../../scripts/patch-electron-name.mjs && electron-vite dev",
-    "build": "electron-vite build",
+    "build": "electron-vite build && node ../../scripts/build-tools.mjs",
     "start": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
-    "dist": "electron-vite build && electron-builder"
+    "dist": "electron-vite build && electron-builder",
+    "release": "electron-vite build && electron-builder --publish always"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
+    "electron-updater": "^6.8.9",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.18",

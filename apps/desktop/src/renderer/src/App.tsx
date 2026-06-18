@@ -3,24 +3,56 @@
 
 import { useEffect } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { useStore, liveWorkspaceIds } from './state/store'
+import { useStore, liveWorkspaceIds, SIDEBAR_MIN, SIDEBAR_MAX } from './state/store'
 import { initTerminalRouting } from './terminal/registry'
 import { FocusedBanner } from './global/FocusedBanner'
 import { AgentRail } from './global/AgentRail'
 import { CommandPalette } from './global/CommandPalette'
+import { UpdateFooter } from './global/UpdateFooter'
+import { WhatsNew } from './global/WhatsNew'
 import { ProjectTree } from './tree/ProjectTree'
 import { ProjectGrid } from './overview/ProjectGrid'
 import { ProjectDetail } from './workspace/ProjectDetail'
+
+// Drag handle on the sidebar's right edge. Updates the width live; the store debounces persistence.
+function SidebarResizer() {
+  const onDown = (e: React.PointerEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = useStore.getState().sidebarWidth
+    document.body.style.cursor = 'col-resize'
+    const onMove = (ev: PointerEvent) => {
+      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startW + (ev.clientX - startX)))
+      useStore.getState().setSidebarWidth(next)
+    }
+    const onUp = () => {
+      document.body.style.cursor = ''
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+  return <div className="resizer" onPointerDown={onDown} title="Drag to resize" />
+}
 
 export function App() {
   const loading = useStore((s) => s.loading)
   const selectedProjectId = useStore((s) => s.selectedProjectId)
   const liveIds = useStore(useShallow(liveWorkspaceIds))
   const flat = useStore((s) => s.flat)
+  const sidebarCollapsed = useStore((s) => s.sidebarCollapsed)
+  const sidebarWidth = useStore((s) => s.sidebarWidth)
 
   useEffect(() => {
     initTerminalRouting()
-    void useStore.getState().refresh()
+    void useStore.getState().initLayout()
+    void (async () => {
+      // Restore after the scan so project layers exist to mount the reattached terminals into.
+      await useStore.getState().refresh()
+      await useStore.getState().restoreWorkspace()
+    })()
+    void useStore.getState().initUpdates()
   }, [])
 
   useEffect(() => {
@@ -68,10 +100,24 @@ export function App() {
     <div className="app">
       <FocusedBanner />
       <div className="split">
-        <div className="sidebar">
-          <ProjectTree />
-          <AgentRail />
-        </div>
+        {sidebarCollapsed ? (
+          <button
+            className="sidebar-reopen"
+            title="Show projects"
+            onClick={() => useStore.getState().toggleSidebar()}
+          >
+            ›
+          </button>
+        ) : (
+          <>
+            <div className="sidebar" style={{ width: sidebarWidth }}>
+              <ProjectTree />
+              <AgentRail />
+              <UpdateFooter />
+            </div>
+            <SidebarResizer />
+          </>
+        )}
         <div className="detail">
           <div className="layer" style={{ display: selectedProjectId ? 'none' : 'block' }}>
             {loading ? <div className="loading">scanning…</div> : <ProjectGrid />}
@@ -92,6 +138,7 @@ export function App() {
         </div>
       </div>
       <CommandPalette />
+      <WhatsNew />
     </div>
   )
 }
