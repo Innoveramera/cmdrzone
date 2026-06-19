@@ -78,6 +78,21 @@ export interface BoardColumn {
   createdAt: number
 }
 
+export interface CardAttachment {
+  id: string
+  cardId: string
+  projectPath: string
+  /** original filename, shown on hover / used to derive the on-disk extension */
+  name: string
+  mime: string
+  /** absolute path on disk (under <userData>/attachments/<cardId>/) */
+  path: string
+  /** czfile:// URL for <img src> in the sandboxed renderer (served by the main process) */
+  url: string
+  position: number
+  createdAt: number
+}
+
 export interface BoardCard {
   id: string
   projectPath: string
@@ -88,6 +103,17 @@ export interface BoardCard {
   position: number
   createdAt: number
   updatedAt: number
+  /** image attachments, loaded by getBoard (not persisted via saveCard) */
+  attachments?: CardAttachment[]
+}
+
+/** payload the renderer sends to attach an image to a card (bytes read from a File) */
+export interface AddAttachmentInput {
+  cardId: string
+  projectPath: string
+  name: string
+  mime: string
+  bytes: Uint8Array
 }
 
 export interface BoardData {

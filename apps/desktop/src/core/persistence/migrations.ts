@@ -106,6 +106,23 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX idx_board_cards_project ON board_cards(project_path);
       CREATE INDEX idx_board_cards_column ON board_cards(column_id);
     `)
+  },
+  // v3 — image attachments on board cards (files live under <userData>/attachments)
+  (db) => {
+    db.exec(`
+      CREATE TABLE board_card_attachments (
+        id           TEXT PRIMARY KEY,
+        card_id      TEXT NOT NULL,
+        project_path TEXT NOT NULL,
+        name         TEXT NOT NULL,
+        mime         TEXT NOT NULL,
+        path         TEXT NOT NULL,
+        position     REAL NOT NULL,
+        created_at   INTEGER NOT NULL
+      );
+      CREATE INDEX idx_board_attach_card ON board_card_attachments(card_id);
+      CREATE INDEX idx_board_attach_project ON board_card_attachments(project_path);
+    `)
   }
 ]
 

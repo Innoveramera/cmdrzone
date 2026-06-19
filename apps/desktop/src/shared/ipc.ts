@@ -24,6 +24,10 @@ export const IPC = {
   boardDeleteCard: 'board:deleteCard',
   boardSaveColumn: 'board:saveColumn',
   boardDeleteColumn: 'board:deleteColumn',
+  boardAddAttachment: 'board:addAttachment',
+  boardDeleteAttachment: 'board:deleteAttachment',
+  /** save dropped image bytes to a temp file, return its absolute path (terminal drop) */
+  mediaSaveTemp: 'media:saveTemp',
   revealInFinder: 'shell:reveal',
   openExternal: 'shell:openExternal',
   clipboardRead: 'clipboard:read',
