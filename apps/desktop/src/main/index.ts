@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { app, BrowserWindow, clipboard, ipcMain, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
+import { app, BrowserWindow, clipboard, ipcMain, protocol, utilityProcess, shell, dialog, nativeImage, type UtilityProcess } from 'electron'
 import { join, basename } from 'node:path'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import os from 'node:os'
 import { IPC } from '@shared/ipc'
 import type {
@@ -12,7 +13,7 @@ import type {
   PtyResizePayload,
   PtyDisposePayload
 } from '@shared/ipc'
-import type { EnvProbeResult, ProjectNode, BoardCard, BoardColumn } from '@shared/types'
+import type { EnvProbeResult, ProjectNode, BoardCard, BoardColumn, AddAttachmentInput, CardAttachment } from '@shared/types'
 import { TMUX_SOCKET, tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import { composeEnv } from '@core/env/shell-path'
 import { buildConf, listSessions, killSession, type TmuxCtx, type TmuxRef } from '@core/tmux/tmux'
@@ -28,7 +29,10 @@ import {
   saveCard as boardSaveCard,
   deleteCard as boardDeleteCard,
   saveColumn as boardSaveColumn,
-  deleteColumn as boardDeleteColumn
+  deleteColumn as boardDeleteColumn,
+  addAttachment as boardAddAttachment,
+  deleteAttachment as boardDeleteAttachment,
+  getAttachment as boardGetAttachment
 } from '@core/board/board'
 import {
   initUpdater,
@@ -42,6 +46,31 @@ import {
 // its data store (~/Library/Application Support/CmdrZone Dev) is isolated from the installed app's
 // (~/Library/Application Support/CmdrZone) — so you can develop freely without touching daily-use data.
 app.setName(process.env.ELECTRON_RENDERER_URL ? 'CmdrZone Dev' : 'CmdrZone')
+
+// Custom scheme the sandboxed renderer can <img src> to display card-image attachments stored
+// on disk under userData. Must be registered before the app is ready. Served in registerIpc().
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'czfile', privileges: { standard: true, secure: true, supportFetchAPI: true } }
+])
+
+const IMG_EXT: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+  'image/bmp': 'bmp',
+  'image/avif': 'avif',
+  'image/heic': 'heic'
+}
+
+/** Pick a file extension from the original filename, falling back to the mime type. */
+function imageExt(name: string, mime: string): string {
+  const m = /\.([a-z0-9]+)$/i.exec(name)
+  if (m) return m[1]!.toLowerCase()
+  return IMG_EXT[mime.toLowerCase()] ?? 'png'
+}
 
 function getRoots(): string[] {
   const def = JSON.stringify([join(os.homedir(), 'Development')])
@@ -268,6 +297,48 @@ function registerIpc(): void {
   ipcMain.handle(IPC.boardDeleteCard, (_e, id: string) => boardDeleteCard(id))
   ipcMain.handle(IPC.boardSaveColumn, (_e, col: BoardColumn) => boardSaveColumn(col))
   ipcMain.handle(IPC.boardDeleteColumn, (_e, id: string) => boardDeleteColumn(id))
+
+  // Card image attachments: write the bytes under userData/attachments/<cardId>/, record the row.
+  ipcMain.handle(IPC.boardAddAttachment, (_e, input: AddAttachmentInput): CardAttachment => {
+    const id = `att-${Date.now()}-${randomUUID().slice(0, 8)}`
+    const dir = join(app.getPath('userData'), 'attachments', input.cardId)
+    mkdirSync(dir, { recursive: true })
+    const filePath = join(dir, `${id}.${imageExt(input.name, input.mime)}`)
+    writeFileSync(filePath, Buffer.from(input.bytes))
+    return boardAddAttachment({
+      id,
+      cardId: input.cardId,
+      projectPath: input.projectPath,
+      name: input.name,
+      mime: input.mime,
+      path: filePath,
+      position: 0, // real position is assigned (max+1) inside addAttachment
+      createdAt: Date.now()
+    })
+  })
+  ipcMain.handle(IPC.boardDeleteAttachment, (_e, id: string) => boardDeleteAttachment(id))
+
+  // Dropped-into-terminal images: persist bytes to a temp file, hand back the absolute path.
+  ipcMain.handle(IPC.mediaSaveTemp, (_e, { name, bytes }: { name: string; bytes: Uint8Array }): string => {
+    const dir = join(app.getPath('userData'), 'dropped')
+    mkdirSync(dir, { recursive: true })
+    const filePath = join(dir, `drop-${Date.now()}-${randomUUID().slice(0, 8)}.${imageExt(name, '')}`)
+    writeFileSync(filePath, Buffer.from(bytes))
+    return filePath
+  })
+
+  // Serve czfile://media/<attachmentId> from disk so the sandboxed renderer can show thumbnails.
+  protocol.handle('czfile', (request) => {
+    try {
+      const id = decodeURIComponent(new URL(request.url).pathname.replace(/^\/+/, ''))
+      const att = boardGetAttachment(id)
+      if (!att) return new Response('not found', { status: 404 })
+      const bytes = new Uint8Array(readFileSync(att.path))
+      return new Response(bytes, { headers: { 'content-type': att.mime, 'cache-control': 'no-cache' } })
+    } catch {
+      return new Response('error', { status: 500 })
+    }
+  })
 
   ipcMain.handle(IPC.settingsGetRoots, () => getRoots())
   ipcMain.handle(IPC.settingsPickRoot, async (): Promise<string[] | null> => {
