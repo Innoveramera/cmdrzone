@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { IPC } from '@shared/ipc'
 import type {
   PtyCreateOptions,
@@ -70,7 +70,15 @@ const api: DesktopApi = {
     saveCard: (card) => ipcRenderer.invoke(IPC.boardSaveCard, card),
     deleteCard: (id) => ipcRenderer.invoke(IPC.boardDeleteCard, id),
     saveColumn: (column) => ipcRenderer.invoke(IPC.boardSaveColumn, column),
-    deleteColumn: (id) => ipcRenderer.invoke(IPC.boardDeleteColumn, id)
+    deleteColumn: (id) => ipcRenderer.invoke(IPC.boardDeleteColumn, id),
+    addAttachment: (input) => ipcRenderer.invoke(IPC.boardAddAttachment, input),
+    deleteAttachment: (id) => ipcRenderer.invoke(IPC.boardDeleteAttachment, id)
+  },
+  media: {
+    // getPathForFile must run here in the preload: a File loses its native path token
+    // when cloned across the context bridge, so the renderer can't call webUtils itself.
+    pathForFile: (file) => webUtils.getPathForFile(file),
+    saveTemp: (name, bytes) => ipcRenderer.invoke(IPC.mediaSaveTemp, { name, bytes })
   },
   app: {
     version: () => ipcRenderer.invoke(IPC.appGetVersion)

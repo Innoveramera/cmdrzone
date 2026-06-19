@@ -2,9 +2,10 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { useEffect, useRef, useState } from 'react'
-import type { ProjectNode, BoardCard, BoardColumn, CardType } from '@shared/types'
+import type { ProjectNode, BoardCard, BoardColumn, CardType, CardAttachment } from '@shared/types'
 import { useStore } from '../state/store'
 import { composePrompt } from '../lib/prompt'
+import { imageFilesFrom, isImageFile, attachImageToCard } from '../lib/images'
 
 const TYPES: { key: CardType; label: string; emoji: string; cls: string }[] = [
   { key: 'idea', label: 'Idea', emoji: '💡', cls: 'ct-idea' },
@@ -105,6 +106,12 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
     setCards((cs) => cs.filter((c) => c.id !== id))
     void window.api.board.deleteCard(id)
     setEditing(null)
+  }
+
+  // Attachments are persisted immediately (they involve files), so the board mirrors them as
+  // they change in the editor — keeps the card-face thumbnail and launch prompt in sync.
+  const setCardAttachments = (cardId: string, attachments: CardAttachment[]) => {
+    setCards((cs) => cs.map((c) => (c.id === cardId ? { ...c, attachments } : c)))
   }
 
   const moveCard = (id: string, toColId: string, beforeCardId?: string) => {
@@ -222,6 +229,7 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
             setEditing(null)
             setLaunching(c)
           }}
+          onAttachmentsChange={setCardAttachments}
         />
       )}
 
@@ -404,6 +412,7 @@ function BoardCardView(props: {
   const { card } = props
   const tm = typeMeta(card.type)
   const preview = card.body ? snippet(card.body) : ''
+  const atts = card.attachments ?? []
   return (
     <div
       className={`board-card${props.isDragging ? ' dragging' : ''}`}
@@ -440,15 +449,28 @@ function BoardCardView(props: {
           </button>
         )}
       </div>
+      {atts.length > 0 && (
+        <div className="board-card-media">
+          <img src={atts[0]!.url} alt="" loading="lazy" draggable={false} />
+          {atts.length > 1 && <span className="board-card-media-more">+{atts.length - 1}</span>}
+        </div>
+      )}
       <div className="board-card-title">{card.title}</div>
       {preview ? <div className="board-card-body">{preview}</div> : null}
       <div className="board-card-foot">
         <span className="card-time">{relativeTime(card.updatedAt)}</span>
-        {card.body ? (
-          <span className="card-note" title="Has notes">
-            📝
-          </span>
-        ) : null}
+        <span className="card-meta">
+          {atts.length > 0 ? (
+            <span className="card-note" title={`${atts.length} image${atts.length > 1 ? 's' : ''}`}>
+              📎
+            </span>
+          ) : null}
+          {card.body ? (
+            <span className="card-note" title="Has notes">
+              📝
+            </span>
+          ) : null}
+        </span>
       </div>
     </div>
   )
@@ -460,15 +482,59 @@ function CardEditor(props: {
   onSave: (c: BoardCard) => void
   onDelete: () => void
   onStart: (c: BoardCard) => void
+  onAttachmentsChange: (cardId: string, atts: CardAttachment[]) => void
 }) {
   const [title, setTitle] = useState(props.card.title)
   const [body, setBody] = useState(props.card.body)
   const [type, setType] = useState<CardType>(props.card.type)
-  const edited = (): BoardCard => ({ ...props.card, title: title.trim() || props.card.title, body, type })
+  const [atts, setAtts] = useState<CardAttachment[]>(props.card.attachments ?? [])
+  const [dragOver, setDragOver] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const edited = (): BoardCard => ({
+    ...props.card,
+    title: title.trim() || props.card.title,
+    body,
+    type,
+    attachments: atts
+  })
+
+  const addFiles = async (files: File[]) => {
+    const images = files.filter(isImageFile)
+    if (images.length === 0) return
+    setBusy(true)
+    try {
+      const added: CardAttachment[] = []
+      for (const f of images) {
+        added.push(await attachImageToCard(props.card.id, props.card.projectPath, f))
+      }
+      const next = [...atts, ...added]
+      setAtts(next)
+      props.onAttachmentsChange(props.card.id, next)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeAttachment = (id: string) => {
+    const next = atts.filter((a) => a.id !== id)
+    setAtts(next)
+    props.onAttachmentsChange(props.card.id, next)
+    void window.api.board.deleteAttachment(id)
+  }
 
   return (
     <div className="modal-overlay" onClick={props.onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        onPaste={(e) => {
+          const imgs = imageFilesFrom(e.clipboardData)
+          if (imgs.length === 0) return
+          e.preventDefault()
+          void addFiles(imgs)
+        }}
+      >
         <input
           className="modal-title"
           autoFocus
@@ -493,6 +559,61 @@ function CardEditor(props: {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Notes / details…"
         />
+
+        <div
+          className={`attach${dragOver ? ' drag-over' : ''}`}
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return
+            e.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+            setDragOver(false)
+          }}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            void addFiles(imageFilesFrom(e.dataTransfer))
+          }}
+        >
+          <div className="attach-head">
+            <span>Images {atts.length > 0 ? `· ${atts.length}` : ''}</span>
+            <button className="attach-add" disabled={busy} onClick={() => fileRef.current?.click()}>
+              {busy ? 'Adding…' : '＋ Add image'}
+            </button>
+          </div>
+          {atts.length > 0 ? (
+            <div className="attach-grid">
+              {atts.map((a) => (
+                <div className="attach-thumb" key={a.id}>
+                  <img src={a.url} alt={a.name} title={a.name} draggable={false} />
+                  <button
+                    className="attach-rm"
+                    title="Remove image"
+                    onClick={() => removeAttachment(a.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="attach-empty">Drop images here, paste a screenshot, or click ＋ Add image</div>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              void addFiles(Array.from(e.target.files ?? []))
+              e.target.value = ''
+            }}
+          />
+        </div>
+
         <div className="modal-actions">
           <button className="primary" onClick={() => props.onStart(edited())}>
             ▶ Start session

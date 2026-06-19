@@ -16,6 +16,8 @@ import type {
   BoardData,
   BoardCard,
   BoardColumn,
+  CardAttachment,
+  AddAttachmentInput,
   RenameResult
 } from './types'
 import type { DurableStatus } from './tmux'
@@ -82,6 +84,15 @@ export interface DesktopApi {
     deleteCard(id: string): Promise<void>
     saveColumn(column: BoardColumn): Promise<void>
     deleteColumn(id: string): Promise<void>
+    /** attach an image (bytes from a File) to a card; resolves with the stored record */
+    addAttachment(input: AddAttachmentInput): Promise<CardAttachment>
+    deleteAttachment(id: string): Promise<void>
+  }
+  media: {
+    /** absolute filesystem path of a dropped File, or '' if it has none (e.g. dragged from the web) */
+    pathForFile(file: File): string
+    /** persist dropped image bytes to a temp file; resolves with the absolute path */
+    saveTemp(name: string, bytes: Uint8Array): Promise<string>
   }
   app: {
     /** the running app version (from package.json) */

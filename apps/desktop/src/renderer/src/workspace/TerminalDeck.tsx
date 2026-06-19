@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
+import { useState } from 'react'
 import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
 import { STATUS_META } from '../lib/format'
-import { SendToAgentBar } from './SendToAgentBar'
+import { imageFilesFrom, droppedImagePath, quotePath } from '../lib/images'
 
 function launchCommandFor(id?: string): string {
   switch (id) {
@@ -30,6 +31,19 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
   const agents = useStore((s) => s.agents)
   const project = useStore((s) => s.findProject(projectId))
   const durable = useStore((s) => s.durable)
+  // Which pane is under an active image drag (for the drop overlay).
+  const [dropPane, setDropPane] = useState<string | null>(null)
+
+  // Save the dropped image(s) and type their path(s) into the pane's PTY — no Enter, so the
+  // user can add context and submit. Claude Code reads the image straight from the path.
+  const dropImages = (paneId: string, groupId: string, dt: DataTransfer): void => {
+    const files = imageFilesFrom(dt)
+    if (files.length === 0) return
+    useStore.getState().setActivePane(groupId, paneId)
+    void Promise.all(files.map(droppedImagePath)).then((paths) => {
+      window.api.pty.input(paneId, paths.map(quotePath).join(' ') + ' ')
+    })
+  }
 
   const myGroups = groupOrder
     .map((g) => groups[g])
@@ -160,8 +174,24 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
               return (
                 <div
                   key={pid}
-                  className={`pane ${split && isActivePane ? 'active' : ''}`}
+                  className={`pane ${split && isActivePane ? 'active' : ''}${dropPane === pid ? ' drop-target' : ''}`}
                   onMouseDown={() => useStore.getState().setActivePane(g.id, pid)}
+                  onDragOver={(e) => {
+                    if (!e.dataTransfer.types.includes('Files')) return
+                    e.preventDefault()
+                    e.dataTransfer.dropEffect = 'copy'
+                    if (dropPane !== pid) setDropPane(pid)
+                  }}
+                  onDragLeave={(e) => {
+                    // Ignore moves onto a child element; only clear when truly leaving the pane.
+                    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+                    setDropPane((cur) => (cur === pid ? null : cur))
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setDropPane(null)
+                    dropImages(pid, g.id, e.dataTransfer)
+                  }}
                 >
                   <div className="term-label" style={{ borderLeftColor: t.color }}>
                     <span className="dot" style={{ background: t.color }} />
@@ -203,14 +233,15 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
                   <div className="term-canvas">
                     <XTermView id={pid} active={isActivePane && g.id === activeGid} />
                   </div>
+                  {dropPane === pid && (
+                    <div className="pane-drop">🖼 Drop image — its path is inserted at the prompt</div>
+                  )}
                 </div>
               )
             })}
           </div>
         ))}
       </div>
-
-      {myGroups.length > 0 && <SendToAgentBar projectId={projectId} />}
     </div>
   )
 }
