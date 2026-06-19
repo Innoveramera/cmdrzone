@@ -1,0 +1,263 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Copyright (C) 2026 Fredrik Hammarström */
+
+/* ============================================================================
+   Total Commander — a classic Windows 9x file-manager skin for CmdrZone.
+   Everything is scoped under html[data-theme="totalcommander"] so it only
+   applies when the theme is selected. Two layers:
+     1. Palette  — redefine the design tokens (silver chrome, white panes, navy
+        selection, black text).
+     2. Chrome   — the bits tokens can't express: beveled 3D borders, square
+        corners, the retro font, classic scrollbars, the function-key bar.
+   ========================================================================== */
+
+/* ---------- 1. Palette ---------- */
+html[data-theme="totalcommander"] {
+  --bg: #808080;          /* dark-gray frame / void between panes */
+  --panel: #c0c0c0;       /* silver chrome: banner, toolbars, sidebar, buttons */
+  --panel2: #ffffff;      /* white file/info/code panes */
+  --border: #808080;
+  --border2: #404040;
+  --text: #000000;
+  --muted: #404040;
+  --accent: #000080;      /* navy — selection / focus accent */
+  --blue: #0000c0;        /* directory / link blue */
+  --amber: #806000;
+  --green: #007000;
+  --red: #c00000;
+  --hover: #d4d0c8;       /* subtle list hover */
+  --elev: #e4e4e4;
+  --sel: #000080;         /* navy selection bar */
+  --sel-strong: #000060;
+  --chip-bg: #c0c0c0;
+  --badge-bg: #a0a0a0;
+  --dim: #808080;
+
+  font-family: "MS Sans Serif", "Tahoma", "Geneva", Verdana, "Segoe UI", sans-serif;
+}
+
+/* ---------- 2. Chrome ---------- */
+
+/* Square every corner (the era had no rounded anything) — keep status dots round. */
+html[data-theme="totalcommander"] *:not(.dot):not(.chip-dot):not(.tdot2) {
+  border-radius: 0 !important;
+}
+
+/* Bevel kits — classic two-tone outset/inset borders. */
+html[data-theme="totalcommander"] .ghost,
+html[data-theme="totalcommander"] .mini,
+html[data-theme="totalcommander"] .chip,
+html[data-theme="totalcommander"] .script,
+html[data-theme="totalcommander"] .doc-tab,
+html[data-theme="totalcommander"] .durable-pill,
+html[data-theme="totalcommander"] .tab.add,
+html[data-theme="totalcommander"] .collapse-btn,
+html[data-theme="totalcommander"] .sidebar-reopen,
+html[data-theme="totalcommander"] .info-reopen,
+html[data-theme="totalcommander"] .uf-cta,
+html[data-theme="totalcommander"] .attach-add,
+html[data-theme="totalcommander"] .board-add-row button,
+html[data-theme="totalcommander"] .modal-actions button,
+html[data-theme="totalcommander"] .fkey {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  color: #000000;
+  box-shadow: none;
+}
+/* pressed-in look */
+html[data-theme="totalcommander"] .ghost:active,
+html[data-theme="totalcommander"] .mini:active,
+html[data-theme="totalcommander"] .script:active,
+html[data-theme="totalcommander"] .doc-tab:active,
+html[data-theme="totalcommander"] .attach-add:active,
+html[data-theme="totalcommander"] .board-add-row button:active,
+html[data-theme="totalcommander"] .modal-actions button:active,
+html[data-theme="totalcommander"] .fkey:active {
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+/* hover on a button is just a slightly lighter face — keep the bevel */
+html[data-theme="totalcommander"] .ghost:hover,
+html[data-theme="totalcommander"] .mini:hover,
+html[data-theme="totalcommander"] .script:hover,
+html[data-theme="totalcommander"] .fkey:hover,
+html[data-theme="totalcommander"] .board-add-row button:hover,
+html[data-theme="totalcommander"] .modal-actions button:hover:not(:disabled),
+html[data-theme="totalcommander"] .attach-add:hover:not(:disabled) {
+  background: #d4d0c8;
+  color: #000000;
+}
+
+/* Sunken wells — text fields, file lists, info panel, code area, console. */
+html[data-theme="totalcommander"] .search,
+html[data-theme="totalcommander"] .tree-search,
+html[data-theme="totalcommander"] .select,
+html[data-theme="totalcommander"] .modal-body,
+html[data-theme="totalcommander"] .modal-title,
+html[data-theme="totalcommander"] .board-add textarea,
+html[data-theme="totalcommander"] .explorer,
+html[data-theme="totalcommander"] .info,
+html[data-theme="totalcommander"] .doc,
+html[data-theme="totalcommander"] .editor-host,
+html[data-theme="totalcommander"] .board-col {
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+/* the terminal lives in a sunken silver well with a black console inside */
+html[data-theme="totalcommander"] .term-canvas {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+
+/* Raised header strips — the silver "Name | Ext | Size" toolbar look. */
+html[data-theme="totalcommander"] .banner,
+html[data-theme="totalcommander"] .ws-bar,
+html[data-theme="totalcommander"] .col-head,
+html[data-theme="totalcommander"] .rail-head,
+html[data-theme="totalcommander"] .board-col-head,
+html[data-theme="totalcommander"] .tabstrip,
+html[data-theme="totalcommander"] .detail-tabs,
+html[data-theme="totalcommander"] .editor-tabs,
+html[data-theme="totalcommander"] .editor-head,
+html[data-theme="totalcommander"] .tree-head,
+html[data-theme="totalcommander"] .term-label,
+html[data-theme="totalcommander"] .update-footer {
+  background: #c0c0c0;
+  border-bottom: 2px solid;
+  border-color: transparent #808080 #808080 transparent;
+  box-shadow: inset 1px 1px 0 #ffffff;
+}
+
+/* Cards become raised silver tiles on the gray desktop. */
+html[data-theme="totalcommander"] .card,
+html[data-theme="totalcommander"] .child-chip,
+html[data-theme="totalcommander"] .board-card {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+html[data-theme="totalcommander"] .card { border-top: 2px solid #ffffff; }
+html[data-theme="totalcommander"] .card:hover,
+html[data-theme="totalcommander"] .child-chip:hover { background: #d4d0c8; }
+/* keep the colored type stripe on kanban cards, drop the blurry drop-shadow */
+html[data-theme="totalcommander"] .board-card { box-shadow: inset 3px 0 0 var(--card-accent); }
+html[data-theme="totalcommander"] .board-card:hover { transform: none; box-shadow: inset 3px 0 0 var(--card-accent); }
+
+/* Navy selection needs white text wherever a selected/active surface uses --sel. */
+html[data-theme="totalcommander"] .chip.on,
+html[data-theme="totalcommander"] .tab.active,
+html[data-theme="totalcommander"] .tab.active .tab-title,
+html[data-theme="totalcommander"] .tab.active .tab-badge,
+html[data-theme="totalcommander"] .dtab.on,
+html[data-theme="totalcommander"] .palette li.sel,
+html[data-theme="totalcommander"] .palette li.sel .pal-name,
+html[data-theme="totalcommander"] .trow.sel,
+html[data-theme="totalcommander"] .trow.sel .tname,
+html[data-theme="totalcommander"] .fsel,
+html[data-theme="totalcommander"] .script:hover {
+  color: #ffffff;
+}
+/* selected rows/tabs: flat navy, no bevel */
+html[data-theme="totalcommander"] .tab.active,
+html[data-theme="totalcommander"] .dtab.on,
+html[data-theme="totalcommander"] .chip.on {
+  background: #000080;
+  border: 2px solid #000080;
+}
+
+/* Dialogs: hard offset drop-shadow instead of a soft blur. */
+html[data-theme="totalcommander"] .modal,
+html[data-theme="totalcommander"] .palette,
+html[data-theme="totalcommander"] .wn {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+html[data-theme="totalcommander"] .wn-head,
+html[data-theme="totalcommander"] .wn-entry,
+html[data-theme="totalcommander"] .palette input {
+  border-color: #808080;
+}
+/* inline code chip in What's New — dark default would be unreadable on silver */
+html[data-theme="totalcommander"] .wn-content code {
+  background: #ffffff;
+  border: 1px solid #808080;
+  color: #000000;
+}
+
+/* Classic chunky scrollbars. */
+html[data-theme="totalcommander"] ::-webkit-scrollbar { width: 16px; height: 16px; }
+html[data-theme="totalcommander"] ::-webkit-scrollbar-track { background: #c0c0c0; }
+html[data-theme="totalcommander"] ::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+html[data-theme="totalcommander"] ::-webkit-scrollbar-button {
+  display: block; height: 16px; width: 16px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+/* ---------- Function-key bar (rendered only in this theme) ---------- */
+.fkbar {
+  display: none;
+  flex: none;
+  align-items: stretch;
+  gap: 3px;
+  height: 26px;
+  padding: 2px 4px;
+}
+html[data-theme="totalcommander"] .fkbar {
+  display: flex;
+  background: #c0c0c0;
+  border-top: 2px solid;
+  border-color: #ffffff transparent transparent transparent;
+}
+.fkey {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  white-space: nowrap;
+  min-width: 0;
+}
+.fkey b { font-weight: 700; }
+.fkey span { overflow: hidden; text-overflow: ellipsis; }
+.fkey:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- Settings dialog (theme picker) ---------- */
+.settings { width: 440px; max-width: 92vw; }
+.settings-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.settings-title { font-weight: 700; font-size: 15px; }
+.settings-body { padding: 14px 16px 16px; }
+.settings-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 8px;
+}
+.theme-opt {
+  display: flex; align-items: flex-start; gap: 10px; width: 100%;
+  text-align: left; margin-bottom: 8px; padding: 11px 12px;
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: 9px;
+  color: var(--text);
+}
+.theme-opt:hover { border-color: var(--accent); }
+.theme-opt.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.theme-swatch {
+  flex: none; width: 34px; height: 34px; border-radius: 7px;
+  border: 1px solid var(--border2); overflow: hidden; display: flex;
+}
+.theme-swatch i { flex: 1; height: 100%; display: block; }
+.theme-opt-main { flex: 1; min-width: 0; }
+.theme-opt-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 7px; }
+.theme-opt-desc { font-size: 11px; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+.theme-opt-check { color: var(--green); font-weight: 700; }

@@ -18,6 +18,9 @@ export function FocusedBanner() {
         <button className="ghost" onClick={() => useStore.getState().togglePalette(true)}>
           ⌘K Switch
         </button>
+        <button className="ghost" title="Settings" onClick={() => useStore.getState().openSettings()}>
+          ⚙
+        </button>
       </header>
     )
   }
@@ -49,6 +52,9 @@ export function FocusedBanner() {
       </button>
       <button className="ghost" onClick={() => useStore.getState().clearSelection()}>
         ⌘0 Dashboard
+      </button>
+      <button className="ghost" title="Settings" onClick={() => useStore.getState().openSettings()}>
+        ⚙
       </button>
     </header>
   )
