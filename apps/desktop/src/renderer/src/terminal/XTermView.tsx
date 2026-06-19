@@ -13,13 +13,7 @@ import { SerializeAddon } from '@xterm/addon-serialize'
 import '@xterm/xterm/css/xterm.css'
 import { registerTerm, unregisterTerm } from './registry'
 import { useStore } from '../state/store'
-
-const THEME = {
-  background: '#0b0d12',
-  foreground: '#d7dce5',
-  cursor: '#9bb4ff',
-  selectionBackground: '#2b3650'
-}
+import { THEMES } from '../theme/themes'
 
 export function XTermView({ id, active }: { id: string; active: boolean }) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -61,7 +55,7 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
       // ⌥ Option forces a real selection regardless — same as iTerm2 / Terminal.app.
       macOptionClickForcesSelection: true,
       rightClickSelectsWord: true,
-      theme: THEME
+      theme: THEMES[useStore.getState().theme].xterm
     })
     const fit = new FitAddon()
     term.loadAddon(fit)
@@ -156,6 +150,12 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
       })
     }
   }, [active, safeFit])
+
+  // Re-skin a live terminal when the user switches themes.
+  const theme = useStore((s) => s.theme)
+  useEffect(() => {
+    if (termRef.current) termRef.current.options.theme = THEMES[theme].xterm
+  }, [theme])
 
   return <div className="xterm-host" ref={hostRef} />
 }

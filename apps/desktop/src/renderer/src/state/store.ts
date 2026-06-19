@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
 import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
+import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
@@ -106,6 +107,10 @@ interface Store {
   changelog: ChangelogEntry[]
   /** whether the "What's New" dialog is open */
   whatsNewOpen: boolean
+  /** active UI theme */
+  theme: ThemeId
+  /** whether the Settings dialog is open */
+  settingsOpen: boolean
 
   refresh: () => Promise<void>
   /** probe tmux + reattach any background sessions that are still alive */
@@ -138,6 +143,11 @@ interface Store {
   installUpdate: () => void
   openWhatsNew: () => void
   closeWhatsNew: () => void
+  /** load the persisted theme and apply it to the DOM on boot */
+  initTheme: () => Promise<void>
+  setTheme: (t: ThemeId) => void
+  openSettings: () => void
+  closeSettings: () => void
 }
 
 function makeTab(projectId: string, opts: NewTermOpts, project?: ProjectNode): TerminalTab {
@@ -180,6 +190,8 @@ export const useStore = create<Store>((set, get) => ({
   update: { status: 'idle', canAutoInstall: false },
   changelog: [],
   whatsNewOpen: false,
+  theme: 'dark',
+  settingsOpen: false,
 
   refresh: async () => {
     const [projects, agents, roots] = await Promise.all([
@@ -477,7 +489,24 @@ export const useStore = create<Store>((set, get) => ({
 
   openWhatsNew: () => set({ whatsNewOpen: true }),
 
-  closeWhatsNew: () => set({ whatsNewOpen: false })
+  closeWhatsNew: () => set({ whatsNewOpen: false }),
+
+  initTheme: async () => {
+    const saved = await window.api.settings.get('theme')
+    const theme: ThemeId = isThemeId(saved) ? saved : 'dark'
+    applyThemeToDom(theme)
+    set({ theme })
+  },
+
+  setTheme: (theme) => {
+    applyThemeToDom(theme)
+    set({ theme })
+    void window.api.settings.set('theme', theme)
+  },
+
+  openSettings: () => set({ settingsOpen: true }),
+
+  closeSettings: () => set({ settingsOpen: false })
 }))
 
 export const SIDEBAR_MIN = 180
