@@ -3,6 +3,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
+import { useStore } from '../state/store'
+import { THEMES } from '../theme/themes'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -62,7 +64,7 @@ export function CodeEditor({ path }: { path: string }) {
     const ed = monaco.editor.create(hostRef.current, {
       value: '',
       language: languageFromPath(path),
-      theme: 'vs-dark',
+      theme: THEMES[useStore.getState().theme].monaco,
       automaticLayout: true,
       fontSize: 13,
       fontFamily: 'Menlo, "SF Mono", monospace',
@@ -89,6 +91,12 @@ export function CodeEditor({ path }: { path: string }) {
       edRef.current = null
     }
   }, [path])
+
+  // Monaco themes are global; re-apply when the user switches themes.
+  const theme = useStore((s) => s.theme)
+  useEffect(() => {
+    monaco.editor.setTheme(THEMES[theme].monaco)
+  }, [theme])
 
   return (
     <div className="editor">

@@ -10,6 +10,8 @@ import { AgentRail } from './global/AgentRail'
 import { CommandPalette } from './global/CommandPalette'
 import { UpdateFooter } from './global/UpdateFooter'
 import { WhatsNew } from './global/WhatsNew'
+import { Settings } from './global/Settings'
+import { FunctionKeyBar } from './global/FunctionKeyBar'
 import { ProjectTree } from './tree/ProjectTree'
 import { ProjectGrid } from './overview/ProjectGrid'
 import { ProjectDetail } from './workspace/ProjectDetail'
@@ -46,6 +48,7 @@ export function App() {
 
   useEffect(() => {
     initTerminalRouting()
+    void useStore.getState().initTheme()
     void useStore.getState().initLayout()
     void (async () => {
       // Restore after the scan so project layers exist to mount the reattached terminals into.
@@ -137,8 +140,10 @@ export function App() {
           })}
         </div>
       </div>
+      <FunctionKeyBar />
       <CommandPalette />
       <WhatsNew />
+      <Settings />
     </div>
   )
 }
