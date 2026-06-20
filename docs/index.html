@@ -6,14 +6,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CmdrZone — one command center for every project & AI agent</title>
-  <meta name="description" content="A macOS-first desktop command center for developers juggling many projects and AI coding agents. Embedded Claude Code terminals, a per-project Kanban board, a Monaco editor and durable sessions — in one window, so you never prompt the wrong project." />
+  <meta name="description" content="A macOS-first desktop command center for developers juggling many projects and AI coding agents. Embedded Claude Code terminals, an image-native per-project Kanban board, a Monaco editor, durable sessions and theme skins (including a Total Commander retro mode) — in one window, so you never prompt the wrong project." />
   <link rel="icon" href="./logo.svg" type="image/svg+xml" />
   <link rel="canonical" href="https://innoveramera.github.io/cmdrzone/" />
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="CmdrZone — Project Command Center" />
-  <meta property="og:description" content="Replace a wall of terminal tabs with one window: a live tree of every project and per-project AI-agent terminals, a Kanban board, an editor and durable sessions." />
+  <meta property="og:description" content="Replace a wall of terminal tabs with one window: a live tree of every project and per-project AI-agent terminals, an image-native Kanban board, an editor, durable sessions and theme skins (incl. a Total Commander retro mode)." />
   <meta property="og:url" content="https://innoveramera.github.io/cmdrzone/" />
   <meta property="og:image" content="./logo.svg" />
   <meta name="twitter:card" content="summary" />
@@ -36,6 +36,7 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="#features">Features</a>
+        <a href="#themes">Themes</a>
         <a href="#shortcuts">Shortcuts</a>
         <a href="#start">Quick start</a>
         <a href="./docs.html">Docs</a>
@@ -158,12 +159,32 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="14" rx="1"/></svg>
             </div>
             <h3>Board → launch from a card</h3>
-            <p>A per-project Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with drag-and-drop cards, persisted in SQLite. Hit <span class="kbd-inline">▶</span> on a card to open a Claude session seeded with its title — the card slides to <em>In&nbsp;Progress</em>.</p>
+            <p>A per-project Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with drag-and-drop cards, persisted in SQLite. Hit <span class="kbd-inline">▶</span> on a card to open a Claude session seeded with its title <em>and any attached images</em> — the card slides to <em>In&nbsp;Progress</em>.</p>
+          </article>
+
+          <!-- NEW: themes -->
+          <article class="card wide reveal">
+            <div class="idx">03 / THEMES</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.6 0 1.9-1.4 1.1-2.3-.8-.9-.2-2 1-2H17a4 4 0 0 0 4-4c0-5-4-9.7-9-9.7Z"/><circle cx="7.5" cy="11.5" r=".9"/><circle cx="12" cy="8" r=".9"/><circle cx="16" cy="11.5" r=".9"/></svg>
+            </div>
+            <h3>Themes &amp; retro skins <span class="tag-new">new</span></h3>
+            <p>Reskin the whole app from Settings — chrome, xterm terminals and the Monaco editor all follow. Ships with <strong style="color:var(--text)">CmdrZone&nbsp;Dark</strong> and a pixel-faithful <strong style="color:var(--text)">Total&nbsp;Commander</strong> mode: silver bevels, square corners, a navy selection bar and an F-key bar. <a href="#themes" style="color:var(--accent)">See it&nbsp;↓</a></p>
+          </article>
+
+          <!-- NEW: image-native -->
+          <article class="card wide reveal" style="transition-delay:.06s">
+            <div class="idx">04 / IMAGES</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>
+            </div>
+            <h3>Image-native cards &amp; sessions <span class="tag-new">new</span></h3>
+            <p>Attach screenshots to any card — pick a file, drag-and-drop, or paste with <span class="kbd-inline">⌘V</span>. Cards get a cover thumbnail and a <span class="kbd-inline">📎</span> badge, and a session launched from the card hands the paths to the agent. Or just <strong style="color:var(--text)">drop an image onto any terminal</strong> to drop its path at the prompt.</p>
           </article>
 
           <!-- tree -->
           <article class="card wide reveal">
-            <div class="idx">03 / PROJECTS</div>
+            <div class="idx">05 / PROJECTS</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h7l2 2h9v12H3z"/><path d="M3 9h18"/></svg>
             </div>
@@ -173,7 +194,7 @@
 
           <!-- durable -->
           <article class="card wide reveal" style="transition-delay:.06s">
-            <div class="idx">04 / TMUX</div>
+            <div class="idx">06 / TMUX</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
             </div>
@@ -183,7 +204,7 @@
 
           <!-- editor -->
           <article class="card reveal">
-            <div class="idx">05</div>
+            <div class="idx">07</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 4v4h4"/><path d="M8 13l2 2-2 2"/><path d="M13 17h3"/></svg>
             </div>
@@ -193,7 +214,7 @@
 
           <!-- awareness -->
           <article class="card reveal" style="transition-delay:.06s">
-            <div class="idx">06</div>
+            <div class="idx">08</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
             </div>
@@ -203,7 +224,7 @@
 
           <!-- info -->
           <article class="card reveal" style="transition-delay:.12s">
-            <div class="idx">07</div>
+            <div class="idx">09</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             </div>
@@ -213,7 +234,7 @@
 
           <!-- cli -->
           <article class="card reveal" style="transition-delay:.18s">
-            <div class="idx">08</div>
+            <div class="idx">10</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9l3 3-3 3"/><path d="M12 15h5"/></svg>
             </div>
@@ -221,9 +242,19 @@
             <p>A <code>cmdrzone</code> CLI and an MCP server let agents file and move board cards themselves — straight against the SQLite store, no GUI needed.</p>
           </article>
 
+          <!-- NEW: updates -->
+          <article class="card reveal" style="transition-delay:.24s">
+            <div class="idx">11 / UPDATES</div>
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            </div>
+            <h3>In-app updates <span class="tag-new">new</span></h3>
+            <p>CmdrZone checks GitHub Releases in the background and a <strong style="color:var(--text)">What's New</strong> dialog (read from the changelog) pops the first time a new build runs.</p>
+          </article>
+
           <!-- split -->
           <article class="card wide reveal">
-            <div class="idx">09 / KEYBOARD-FIRST</div>
+            <div class="idx">12 / KEYBOARD-FIRST</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
             </div>
@@ -233,7 +264,7 @@
 
           <!-- model agnostic -->
           <article class="card wide reveal" style="transition-delay:.06s">
-            <div class="idx">10 / EXTENSIBLE</div>
+            <div class="idx">13 / EXTENSIBLE</div>
             <div class="ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 18.8 7.2 17l.9-5.4L4.2 7.7l5.4-.8z"/></svg>
             </div>
@@ -241,6 +272,124 @@
             <p>Agents are just launch recipes — add your own. Defaults to Claude Code, but anything you run from a shell can be a one-click agent.</p>
           </article>
         </div>
+      </div>
+    </section>
+
+    <!-- ───────── Themes (Total Commander showcase) ───────── -->
+    <section class="section" id="themes">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow"><span class="dot"></span> new · make it yours</span>
+          <h2 style="margin-top:.8rem">A theme picker — and a full Total&nbsp;Commander skin</h2>
+          <p>Pick a theme in Settings and the <em>whole app</em> reskins — chrome, terminals and the Monaco editor. Below: CmdrZone wearing <strong style="color:var(--text)">Total&nbsp;Commander</strong>, down to the silver bevels, navy selection and F-key bar.</p>
+        </div>
+
+        <div class="themes-grid reveal">
+          <!-- The app, wearing the Total Commander skin -->
+          <div class="tcwin" aria-hidden="true">
+            <div class="tcwin-bar">
+              <span class="tcwin-ico"></span>
+              <span class="tcwin-title">CmdrZone — ~/Development</span>
+              <span class="tcwin-btns"><i>_</i><i>▢</i><i>✕</i></span>
+            </div>
+            <div class="tcwin-body">
+              <div class="tc-tabs">
+                <span class="tc-tab on">▣ Board</span>
+                <span class="tc-tab">▭ Terminals</span>
+                <span class="tc-tab">✎ Editor</span>
+              </div>
+              <div class="tc-board">
+                <div class="tc-col">
+                  <div class="tc-col-head">Ideas <span class="tc-count">0</span><span class="tc-x">✕</span></div>
+                  <div class="tc-col-body">
+                    <div class="tc-empty">No cards yet</div>
+                    <div class="tc-add">+ Add a card</div>
+                  </div>
+                </div>
+                <div class="tc-col">
+                  <div class="tc-col-head">To&nbsp;Do <span class="tc-count">3</span><span class="tc-x">✕</span></div>
+                  <div class="tc-col-body">
+                    <div class="tc-card feature">
+                      <div class="tc-card-type">✨ Feature</div>
+                      <div class="tc-card-title">Auto-install app</div>
+                      <div class="tc-card-meta">2d ago</div>
+                    </div>
+                    <div class="tc-card task">
+                      <div class="tc-card-type">☑ Task</div>
+                      <div class="tc-card-title">Dependabot: tar + esbuild</div>
+                      <div class="tc-card-meta">13h ago</div>
+                    </div>
+                    <div class="tc-card idea">
+                      <div class="tc-card-type">💡 Idea</div>
+                      <div class="tc-card-title">Update landing page</div>
+                      <div class="tc-card-meta">just now</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tc-col">
+                  <div class="tc-col-head">In&nbsp;Progress <span class="tc-count">0</span><span class="tc-x">✕</span></div>
+                  <div class="tc-col-body">
+                    <div class="tc-empty">No cards yet</div>
+                    <div class="tc-add">+ Add a card</div>
+                  </div>
+                </div>
+                <div class="tc-col">
+                  <div class="tc-col-head">Done <span class="tc-count">1</span><span class="tc-x">✕</span></div>
+                  <div class="tc-col-body">
+                    <div class="tc-card feature">
+                      <div class="tc-card-type">✨ Feature</div>
+                      <div class="tc-card-title">Theme system + Total&nbsp;Commander skin</div>
+                      <div class="tc-card-meta">1d ago</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tc-col">
+                  <div class="tc-col-head">Archive <span class="tc-count">1</span><span class="tc-x">✕</span></div>
+                  <div class="tc-col-body">
+                    <div class="tc-card feature">
+                      <div class="tc-card-type">✨ Feature</div>
+                      <div class="tc-card-title">Durable tmux sessions</div>
+                      <div class="tc-card-meta">3d ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tc-fkbar">
+                <span class="tc-fkey"><b>F2</b><span>Dash</span></span>
+                <span class="tc-fkey"><b>F3</b><span>Board</span></span>
+                <span class="tc-fkey"><b>F4</b><span>Editor</span></span>
+                <span class="tc-fkey"><b>F5</b><span>Term</span></span>
+                <span class="tc-fkey"><b>F7</b><span>Shell</span></span>
+                <span class="tc-fkey"><b>F8</b><span>Close</span></span>
+                <span class="tc-fkey"><b>F10</b><span>Menu</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- The theme picker, also wearing the skin -->
+          <div class="tc-settings" aria-hidden="true">
+            <div class="tc-set-bar">Settings — Theme</div>
+            <div class="tc-set-body">
+              <div class="tc-set-lbl">Appearance</div>
+              <div class="tc-opt">
+                <span class="tc-swatch"><i style="background:#0b0d12"></i><i style="background:#6c8cff"></i></span>
+                <span class="tc-opt-main">
+                  <span class="tc-opt-name">CmdrZone Dark</span>
+                  <span class="tc-opt-desc">Deep navy panels, One-Dark accents, rounded chrome.</span>
+                </span>
+              </div>
+              <div class="tc-opt on">
+                <span class="tc-swatch"><i style="background:#c0c0c0"></i><i style="background:#000080"></i></span>
+                <span class="tc-opt-main">
+                  <span class="tc-opt-name">Total Commander <span class="tc-check">✓</span></span>
+                  <span class="tc-opt-desc">Silver bevels, square corners, a function-key bar, and a black console.</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="themes-cap reveal">▣ The Total&nbsp;Commander skin reskins everything — even xterm goes full black-console (phosphor-green cursor) and Monaco switches to a light theme.</p>
       </div>
     </section>
 
