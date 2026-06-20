@@ -7,7 +7,9 @@ import { useStore } from '../state/store'
 import { summarizeProject, STATUS_META } from '../lib/format'
 
 function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?: boolean }) {
-  const selected = useStore((s) => s.selectedProjectId === node.id)
+  // A pinned project is rendered twice (Pinned + All projects); `flat` marks the
+  // Pinned-section copy. Only highlight the instance that was actually selected.
+  const selected = useStore((s) => s.selectedProjectId === node.id && s.selectedPinned === !!flat)
   const terminals = useStore((s) => s.terminals)
   const git = useStore((s) => s.gitByPath[node.path])
   const sum = summarizeProject(node.id, terminals)
@@ -28,7 +30,7 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
   return (
     <div
       className={`trow ${child ? 'child' : ''} ${selected ? 'sel' : ''}`}
-      onClick={() => !renaming && useStore.getState().selectProject(node.id)}
+      onClick={() => !renaming && useStore.getState().selectProject(node.id, !!flat)}
       title={`${node.path}\n(double-click name to rename)`}
     >
       <span className="tdot2" style={{ background: node.color }} />

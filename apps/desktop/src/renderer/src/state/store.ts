@@ -83,6 +83,10 @@ interface Store {
   agents: AgentProviderInfo[]
   gitByPath: Record<string, GitStatus>
   selectedProjectId: string | null
+  /** whether the current selection was made from the Pinned section (a pinned
+   * project is rendered in both Pinned and All projects — this disambiguates
+   * which copy shows the selection highlight) */
+  selectedPinned: boolean
   terminals: Record<string, TerminalTab>
   groups: Record<string, PaneGroup>
   groupOrder: string[]
@@ -118,7 +122,7 @@ interface Store {
   toggleDurable: () => Promise<void>
   pickRoot: () => Promise<void>
   findProject: (id: string | null) => ProjectNode | undefined
-  selectProject: (id: string) => void
+  selectProject: (id: string, fromPinned?: boolean) => void
   clearSelection: () => void
   togglePalette: (open?: boolean) => void
   toggleInfo: () => void
@@ -175,6 +179,7 @@ export const useStore = create<Store>((set, get) => ({
   agents: [],
   gitByPath: {},
   selectedProjectId: null,
+  selectedPinned: false,
   terminals: {},
   groups: {},
   groupOrder: [],
@@ -282,13 +287,13 @@ export const useStore = create<Store>((set, get) => ({
 
   findProject: (id) => (id ? get().flat.find((p) => p.id === id) : undefined),
 
-  selectProject: (id) => {
-    set({ selectedProjectId: id, paletteOpen: false })
+  selectProject: (id, fromPinned = false) => {
+    set({ selectedProjectId: id, selectedPinned: fromPinned, paletteOpen: false })
     void window.api.projects.setPref(id, 'lastOpenedAt', String(Date.now()))
     void window.api.settings.set('lastSelected', id)
   },
 
-  clearSelection: () => set({ selectedProjectId: null }),
+  clearSelection: () => set({ selectedProjectId: null, selectedPinned: false }),
 
   togglePalette: (open) => set((s) => ({ paletteOpen: open ?? !s.paletteOpen })),
 
