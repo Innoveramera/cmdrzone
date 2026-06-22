@@ -74,7 +74,17 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
     // so we do it ourselves: otherwise the browser's ⌘C copies the (empty) DOM
     // selection over ours, and ⌘V fires a second, native paste.
     term.attachCustomKeyEventHandler((e) => {
-      if (e.type !== 'keydown' || !e.metaKey) return true
+      if (e.type !== 'keydown') return true
+      // Shift+Enter inserts a newline instead of submitting. A terminal sends a plain \r for
+      // Enter and has no way to signal that Shift was held, so agent prompts (Claude Code, etc.)
+      // treat Shift+Enter as a submit too. Send a bare line feed (\n) instead: Claude Code reads
+      // \n as "insert a newline, don't submit" — the same mapping its `/terminal-setup` installs.
+      if ((e.code === 'Enter' || e.code === 'NumpadEnter') && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        window.api.pty.input(id, '\n')
+        e.preventDefault()
+        return false
+      }
+      if (!e.metaKey) return true
       if (e.code === 'KeyC' && term.hasSelection()) {
         window.api.clipboard.write(term.getSelection())
         e.preventDefault()
@@ -89,6 +99,22 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
       }
       return true
     })
+
+    // Make plain click+drag select text even in agent sessions. Agent TUIs (Claude, etc.) enable
+    // mouse reporting (DECSET 1000/1002/1003), so xterm forwards the drag to the program instead of
+    // highlighting — you can't select to copy. xterm only bypasses this when a modifier forces
+    // selection (`macOptionClickForcesSelection` → hold ⌥ on macOS), which nobody discovers. So we
+    // synthesize it: on a plain left-drag while the program has mouse tracking on, make the event
+    // look like ⌥ is held. Capturing on the host runs before xterm's own handler (which lives on a
+    // descendant), and redefining `altKey` routes the click through xterm's force-selection path —
+    // the exact code Option-drag already uses, which also suppresses the mouse report. Plain shells
+    // (no mouse tracking) are left completely untouched and keep native selection/click behavior.
+    const forceSelectOnDrag = (e: MouseEvent): void => {
+      if (e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return
+      if (term.modes.mouseTrackingMode === 'none') return
+      Object.defineProperty(e, 'altKey', { configurable: true, get: () => true })
+    }
+    host.addEventListener('mousedown', forceSelectOnDrag, true)
 
     term.open(host)
     try {
@@ -135,6 +161,7 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
 
     return () => {
       ro.disconnect()
+      host.removeEventListener('mousedown', forceSelectOnDrag, true)
       unregisterTerm(id)
       window.api.pty.dispose(id)
       term.dispose()
