@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { useStore, liveWorkspaceIds, SIDEBAR_MIN, SIDEBAR_MAX } from './state/store'
+import { useStore, liveWorkspaceIds, activeAgentProjectIds, SIDEBAR_MIN, SIDEBAR_MAX } from './state/store'
 import { initTerminalRouting } from './terminal/registry'
 import { FocusedBanner } from './global/FocusedBanner'
 import { AgentRail } from './global/AgentRail'
@@ -82,6 +82,21 @@ export function App() {
         useStore
           .getState()
           .splitActive(selectedProjectId, e.shiftKey ? 'col' : 'row', { kind: 'shell', title: 'shell' })
+      } else if (e.metaKey && e.altKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+        // ⌘⌥→ / ⌘⌥← cycle through projects that have an agent open (attention-needed first).
+        const ids = activeAgentProjectIds(useStore.getState())
+        if (ids.length === 0) return
+        e.preventDefault()
+        const cur = useStore.getState().selectedProjectId
+        const idx = cur ? ids.indexOf(cur) : -1
+        const dir = e.key === 'ArrowRight' ? 1 : -1
+        const next =
+          idx === -1
+            ? dir === 1
+              ? ids[0]!
+              : ids[ids.length - 1]!
+            : ids[(idx + dir + ids.length) % ids.length]!
+        useStore.getState().selectProject(next)
       }
     }
     window.addEventListener('keydown', onKey)

@@ -6,6 +6,7 @@ import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
 import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
 import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
+import { statusRank } from '../lib/format'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
@@ -581,4 +582,22 @@ export function liveWorkspaceIds(s: Store): string[] {
   for (const id in s.terminals) ids.add(s.terminals[id]!.projectId)
   if (s.selectedProjectId) ids.add(s.selectedProjectId)
   return [...ids]
+}
+
+/**
+ * Project ids that have at least one agent terminal open, ordered for cycling with ⌘⌥←/→:
+ * attention-needed first (waiting → error → working → done → idle), then by id as a stable
+ * tiebreaker so the order doesn't jitter between keypresses when statuses are equal.
+ */
+export function activeAgentProjectIds(s: Store): string[] {
+  const best: Record<string, AgentStatus> = {}
+  for (const id in s.terminals) {
+    const t = s.terminals[id]!
+    if (t.kind !== 'agent') continue
+    const cur = best[t.projectId]
+    if (cur === undefined || statusRank(t.status) < statusRank(cur)) best[t.projectId] = t.status
+  }
+  return Object.keys(best).sort(
+    (a, b) => statusRank(best[a]!) - statusRank(best[b]!) || (a < b ? -1 : a > b ? 1 : 0)
+  )
 }
