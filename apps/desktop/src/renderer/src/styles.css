@@ -310,6 +310,25 @@ input { font-family: inherit; }
 .editor-empty { display: flex; align-items: center; justify-content: center; height: 100%; }
 .fsel { background: var(--sel); }
 
+/* ---------- Design (Figma embed) ---------- */
+.designview { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.design-head {
+  height: 30px; flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--muted); background: var(--panel2);
+}
+.design-key { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.design-spacer { flex: 1; }
+.design-frame { flex: 1; width: 100%; min-height: 0; border: 0; background: var(--bg); }
+.design-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; height: 100%; padding: 24px; text-align: center;
+}
+.design-empty-title { font-size: 15px; font-weight: 600; }
+.design-empty-hint { max-width: 460px; font-size: 12px; line-height: 1.5; }
+.design-empty input { width: min(560px, 80%); }
+.design-empty .err { color: var(--red); font-size: 12px; }
+
 /* ---------- Board (Kanban) ---------- */
 .board { height: 100%; display: flex; gap: 12px; padding: 14px; overflow-x: auto; align-items: flex-start; background: var(--bg); }
 .board-col {
@@ -527,3 +546,4 @@ input { font-family: inherit; }
 .wn-list { margin: 4px 0; padding-left: 18px; }
 .wn-list li { margin: 4px 0; line-height: 1.5; }
 .wn-content code { background: #1a2030; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+

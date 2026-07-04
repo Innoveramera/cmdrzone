@@ -47,6 +47,12 @@ import {
 // (~/Library/Application Support/CmdrZone) — so you can develop freely without touching daily-use data.
 app.setName(process.env.ELECTRON_RENDERER_URL ? 'CmdrZone Dev' : 'CmdrZone')
 
+// The Design tab embeds Figma (a third-party iframe) which needs its own first-party
+// figma.com cookies readable *inside* that iframe to keep the user signed in. Chromium's
+// third-party storage partitioning isolates those cookies per top-level site, which breaks
+// the embed's signed-in state — disable it so the embed behaves like a normal browser tab.
+app.commandLine.appendSwitch('disable-features', 'ThirdPartyStoragePartitioning')
+
 // Custom scheme the sandboxed renderer can <img src> to display card-image attachments stored
 // on disk under userData. Must be registered before the app is ready. Served in registerIpc().
 protocol.registerSchemesAsPrivileged([
@@ -63,6 +69,26 @@ const IMG_EXT: Record<string, string> = {
   'image/bmp': 'bmp',
   'image/avif': 'avif',
   'image/heic': 'heic'
+}
+
+// Hosts whose popups are part of the Figma embed's sign-in flow and must open inside Electron
+// (sharing the embed's session) rather than the OS browser. Covers Figma itself plus the SSO
+// providers a "Log in" / "Continue with…" choice can hand off to.
+const AUTH_POPUP_HOSTS = [
+  'figma.com',
+  'accounts.google.com',
+  'login.microsoftonline.com',
+  'appleid.apple.com'
+]
+
+/** True if `url`'s host is (or is a subdomain of) one of the embed sign-in / SSO hosts. */
+function isAuthPopupUrl(url: string): boolean {
+  try {
+    const h = new URL(url).hostname
+    return AUTH_POPUP_HOSTS.some((d) => h === d || h.endsWith('.' + d))
+  } catch {
+    return false
+  }
 }
 
 /** Pick a file extension from the original filename, falling back to the mime type. */
@@ -189,8 +215,23 @@ function createWindow(): void {
     console.error('RENDER_PROCESS_GONE', details.reason)
   })
 
-  // External links always go to the OS browser, never a new Electron window.
+  // External links go to the OS browser — EXCEPT the Figma embed's sign-in popup, which must
+  // open inside Electron so its session cookie lands in the same session as the embedded iframe
+  // (opening it in the OS browser is why login never reached the embed). The popup may hop to an
+  // SSO provider (Google/Microsoft/Apple) and back; it shares our session and self-closes on success.
   win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isAuthPopupUrl(url)) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 480,
+          height: 720,
+          title: 'Sign in',
+          autoHideMenuBar: true,
+          webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
+        }
+      }
+    }
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
       shell.openExternal(url)
     }

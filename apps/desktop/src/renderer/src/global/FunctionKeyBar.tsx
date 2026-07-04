@@ -21,6 +21,7 @@ function buildKeys(selectedProjectId: string | null): FKey[] {
     { key: 'F3', label: 'Board', enabled: !!sel, run: () => s.setDetailMode('board') },
     { key: 'F4', label: 'Editor', enabled: !!sel, run: () => s.setDetailMode('editor') },
     { key: 'F5', label: 'Term', enabled: !!sel, run: () => s.setDetailMode('terminals') },
+    { key: 'F6', label: 'Design', enabled: !!sel, run: () => s.setDetailMode('design') },
     {
       key: 'F7',
       label: 'Shell',

@@ -99,7 +99,7 @@ interface Store {
   sidebarCollapsed: boolean
   /** left sidebar width in px (resizable, persisted) */
   sidebarWidth: number
-  detailMode: 'terminals' | 'editor' | 'board'
+  detailMode: 'terminals' | 'editor' | 'board' | 'design'
   /** durable-session (tmux) status; null until probed */
   durable: DurableStatus | null
   /** gate: don't persist the workspace until a restore attempt has run (else we'd wipe it) */
@@ -131,7 +131,7 @@ interface Store {
   setSidebarWidth: (w: number) => void
   /** load persisted layout (sidebar width/collapse, info panel) on boot */
   initLayout: () => Promise<void>
-  setDetailMode: (m: 'terminals' | 'editor' | 'board') => void
+  setDetailMode: (m: 'terminals' | 'editor' | 'board' | 'design') => void
   newTerminal: (projectId: string, opts: NewTermOpts) => string
   splitActive: (projectId: string, dir: SplitDir, opts: NewTermOpts) => string
   closeTerminal: (id: string) => void

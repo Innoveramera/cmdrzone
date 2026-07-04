@@ -30,6 +30,8 @@ export interface ProjectNode {
   isPinned: boolean
   isHidden: boolean
   defaultProviderId?: string
+  /** per-project Figma file/proto URL (project override; empty/undefined = not connected) */
+  figmaUrl?: string
   lastOpenedAt?: number
   hasClaudeMd: boolean
   hasTasksMd: boolean

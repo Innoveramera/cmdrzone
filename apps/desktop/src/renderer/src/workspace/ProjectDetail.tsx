@@ -7,6 +7,7 @@ import { TerminalDeck } from './TerminalDeck'
 import { ProjectInfo } from './ProjectInfo'
 import { ProjectEditor } from './ProjectEditor'
 import { ProjectBoard } from './ProjectBoard'
+import { ProjectDesign } from './ProjectDesign'
 
 // Right pane of the master-detail layout. Three modes — Terminals (sessions + info),
 // Editor (files + code), Board (ideas/features/bugs). Terminals + Editor stay mounted so
@@ -36,6 +37,12 @@ export function ProjectDetail({ project }: { project: ProjectNode }) {
         >
           📝 Editor
         </button>
+        <button
+          className={`dtab ${mode === 'design' ? 'on' : ''}`}
+          onClick={() => useStore.getState().setDetailMode('design')}
+        >
+          🎨 Design
+        </button>
       </div>
 
       <div className="detail-body">
@@ -55,6 +62,11 @@ export function ProjectDetail({ project }: { project: ProjectNode }) {
         {mode === 'board' && (
           <div className="dmode">
             <ProjectBoard project={project} />
+          </div>
+        )}
+        {mode === 'design' && (
+          <div className="dmode">
+            <ProjectDesign project={project} />
           </div>
         )}
       </div>

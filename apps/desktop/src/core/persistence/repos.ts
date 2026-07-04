@@ -59,6 +59,7 @@ export function applyPrefs(nodes: ProjectNode[], prefs: Map<string, Record<strin
       if (p.hidden !== undefined) n.isHidden = p.hidden === '1'
       if (p.color) n.color = p.color
       if (p.defaultProviderId) n.defaultProviderId = p.defaultProviderId
+      if (p.figmaUrl) n.figmaUrl = p.figmaUrl
       if (p.lastOpenedAt) n.lastOpenedAt = parseInt(p.lastOpenedAt, 10)
     }
     if (n.children) applyPrefs(n.children, prefs)
