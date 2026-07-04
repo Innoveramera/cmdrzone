@@ -62,6 +62,17 @@ Run `pnpm typecheck && pnpm build` before considering a change done.
   keep `mac.target` including `zip` + the `publish` block in `electron-builder.yml` (the updater
   reads `latest-mac.yml`). `CHANGELOG.md` is shipped via `extraResources` and shown as **What's New**.
 
+- **Agent status comes from Claude Code hooks, not output parsing.** Main runs a local hook
+  endpoint (`core/agents/hook-server.ts`); `wrapForHooks()` in `main/index.ts` tags every Claude
+  launch with `env CMDRZONE_SESSION_ID=<tabId>` + `--settings <userData>/claude-hooks.json`.
+  Hook **port + token persist in settings** so tmux-durable sessions keep reporting across app
+  restarts — don't regenerate them per boot. Once a tab is `hooked`, the renderer trusts hook
+  events and disables the last-line heuristic for it (kept as fallback for other agents).
+- **Worktrees (parallel agents)** live in `<parent>/.cz-worktrees/<repo>/<name>` — a dot-dir, so
+  the scanner never double-discovers them. Discovery derives from `git worktree list --porcelain`
+  (`core/projects/worktrees.ts`), attached as project children in `scanAll()`. Only parse
+  `--porcelain` output (localized git otherwise). Merge/remove confirm via native dialog in main.
+
 ## Architecture (keep the boundaries)
 
 ```

@@ -27,7 +27,7 @@ function has(dir: string, name: string): boolean {
   return fs.existsSync(path.join(dir, name))
 }
 
-interface Markers {
+export interface Markers {
   git: boolean
   pkg: boolean
   pubspec: boolean
@@ -38,7 +38,7 @@ interface Markers {
   env: boolean
 }
 
-function readMarkers(dir: string): Markers {
+export function readMarkers(dir: string): Markers {
   let env = false
   try {
     env = fs.readdirSync(dir).some((f) => f === '.env' || f.startsWith('.env.'))
@@ -82,7 +82,7 @@ function detectType(dir: string, m: Markers): ProjectType {
   return 'unknown'
 }
 
-function makeNode(dir: string, name: string, kind: ProjectKind, m: Markers): ProjectNode {
+export function makeNode(dir: string, name: string, kind: ProjectKind, m: Markers): ProjectNode {
   return {
     id: dir,
     name,

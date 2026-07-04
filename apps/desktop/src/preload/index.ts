@@ -9,6 +9,7 @@ import type {
   PtyExitPayload
 } from '@shared/ipc'
 import type { DesktopApi } from '@shared/api'
+import type { AgentHookEvent } from '@shared/types'
 import type { UpdateState } from '@shared/update'
 
 const api: DesktopApi = {
@@ -44,7 +45,19 @@ const api: DesktopApi = {
     rename: (path, newName) => ipcRenderer.invoke(IPC.projectsRename, { path, newName })
   },
   agents: {
-    list: () => ipcRenderer.invoke(IPC.agentsList)
+    list: () => ipcRenderer.invoke(IPC.agentsList),
+    onHookEvent: (cb) => {
+      const h = (_e: unknown, ev: AgentHookEvent) => cb(ev)
+      ipcRenderer.on(IPC.agentHookEvent, h)
+      return () => ipcRenderer.removeListener(IPC.agentHookEvent, h)
+    }
+  },
+  worktrees: {
+    add: (projectPath, name) => ipcRenderer.invoke(IPC.worktreeAdd, { projectPath, name }),
+    remove: (projectPath, worktreePath) =>
+      ipcRenderer.invoke(IPC.worktreeRemove, { projectPath, worktreePath }),
+    merge: (projectPath, worktreePath) =>
+      ipcRenderer.invoke(IPC.worktreeMerge, { projectPath, worktreePath })
   },
   fs: {
     readDir: (path) => ipcRenderer.invoke(IPC.fsReadDir, path),

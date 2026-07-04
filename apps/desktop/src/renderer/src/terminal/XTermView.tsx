@@ -153,7 +153,8 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
       cols: term.cols,
       rows: term.rows,
       initialCommand: tab.initialCommand,
-      spawn: tab.spawn
+      spawn: tab.spawn,
+      providerId: tab.providerId
     })
 
     const ro = new ResizeObserver(() => safeFit())

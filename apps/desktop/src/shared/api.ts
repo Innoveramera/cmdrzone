@@ -12,13 +12,15 @@ import type {
   ProjectNode,
   GitStatus,
   AgentProviderInfo,
+  AgentHookEvent,
   DirEntry,
   BoardData,
   BoardCard,
   BoardColumn,
   CardAttachment,
   AddAttachmentInput,
-  RenameResult
+  RenameResult,
+  WorktreeOpResult
 } from './types'
 import type { DurableStatus } from './tmux'
 import type { UpdateState, ChangelogEntry } from './update'
@@ -55,6 +57,16 @@ export interface DesktopApi {
   }
   agents: {
     list(): Promise<AgentProviderInfo[]>
+    /** subscribe to Claude Code hook events (authoritative status); returns an unsubscribe fn */
+    onHookEvent(cb: (ev: AgentHookEvent) => void): () => void
+  }
+  worktrees: {
+    /** create <parent>/.cz-worktrees/<repo>/<name> on a new cz/<name> branch */
+    add(projectPath: string, name: string): Promise<WorktreeOpResult>
+    /** remove a worktree + its branch (confirms first; discards unmerged work) */
+    remove(projectPath: string, worktreePath: string): Promise<WorktreeOpResult>
+    /** merge the worktree's branch into the main checkout, then remove it (confirms first) */
+    merge(projectPath: string, worktreePath: string): Promise<WorktreeOpResult>
   }
   fs: {
     readDir(path: string): Promise<DirEntry[]>

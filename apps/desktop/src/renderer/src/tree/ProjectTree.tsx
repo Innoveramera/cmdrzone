@@ -54,11 +54,13 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
         <span
           className="tname"
           onDoubleClick={(e) => {
+            if (node.worktreeOf) return // worktree names are branch-derived, not renamable
             e.stopPropagation()
             setName(node.name)
             setRenaming(true)
           }}
         >
+          {node.worktreeOf ? <span className="twt">⎇ </span> : null}
           {node.name}
         </span>
       )}
@@ -70,7 +72,7 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
         </span>
       )}
       {!renaming && git?.isRepo && git.dirty > 0 && <span className="tdirty">✎{git.dirty}</span>}
-      {!renaming && (
+      {!renaming && !node.worktreeOf && (
         <span
           className={`tstar ${node.isPinned ? 'on' : ''}`}
           onClick={(e) => {
@@ -82,6 +84,18 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
         </span>
       )}
     </div>
+  )
+}
+
+/** A project row plus its git-worktree children (parallel-agent checkouts), indented below. */
+function ProjectRow({ node, child }: { node: ProjectNode; child?: boolean }) {
+  return (
+    <>
+      <Row node={node} child={child} />
+      {node.children?.map((w) => (
+        <Row key={w.id} node={w} child />
+      ))}
+    </>
   )
 }
 
@@ -98,7 +112,7 @@ function GroupRow({ node }: { node: ProjectNode }) {
       {open && node.children && (
         <div className="tchildren">
           {node.children.map((c) => (
-            <Row key={c.id} node={c} child />
+            <ProjectRow key={c.id} node={c} child />
           ))}
         </div>
       )}
@@ -168,7 +182,7 @@ export function ProjectTree() {
           </>
         )}
         {list.map((n) =>
-          n.kind === 'group' ? <GroupRow key={n.id} node={n} /> : <Row key={n.id} node={n} />
+          n.kind === 'group' ? <GroupRow key={n.id} node={n} /> : <ProjectRow key={n.id} node={n} />
         )}
         {list.length === 0 && <div className="muted small pad">no projects</div>}
       </div>

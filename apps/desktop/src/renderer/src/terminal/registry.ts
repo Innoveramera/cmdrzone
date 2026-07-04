@@ -3,7 +3,7 @@
 
 import type { Terminal as XTerm } from '@xterm/xterm'
 import type { FitAddon } from '@xterm/addon-fit'
-import { useStore, type AgentStatus } from '../state/store'
+import { useStore, type AgentStatus, type TerminalTab } from '../state/store'
 import { classifyIdle, lastNonEmptyLine, stripAnsi } from './agentState'
 
 function detectPort(buffer: string): number | null {
@@ -60,7 +60,9 @@ export function initTerminalRouting(): void {
     inst.buffer = (inst.buffer + p.data).slice(-4000)
 
     const tab = useStore.getState().terminals[p.id]
-    if (tab && tab.kind === 'agent' && !tab.exited && tab.status !== 'working') {
+    // Output-driven "working" is a fallback only — a hooked tab's status comes from Claude
+    // Code's own lifecycle events (spinners repaint while it waits, so output ≠ working).
+    if (tab && tab.kind === 'agent' && !tab.exited && !tab.hooked && tab.status !== 'working') {
       useStore.getState().patchTerminal(p.id, { status: 'working', lastLine: lastNonEmptyLine(inst.buffer) })
     }
     if (tab && !tab.port) {
@@ -79,12 +81,53 @@ export function initTerminalRouting(): void {
     if (tab.kind === 'agent') notify(tab, status, '')
   })
 
+  // Claude Code hook events — the authoritative status feed for sessions we launched.
+  // First event flips the tab to `hooked`, which switches the heuristics below off for it.
+  window.api.agents.onHookEvent((ev) => {
+    const tab = useStore.getState().terminals[ev.terminalId]
+    if (!tab || tab.kind !== 'agent' || tab.exited) return
+    const patch: Partial<TerminalTab> = { hooked: true }
+    if (ev.claudeSessionId) patch.claudeSessionId = ev.claudeSessionId
+    switch (ev.event) {
+      case 'SessionStart':
+        // compact restarts mid-turn; the others (startup/resume/clear) land at an empty prompt
+        if (ev.source !== 'compact') {
+          patch.status = 'idle'
+          patch.lastLine = ''
+        }
+        break
+      case 'UserPromptSubmit':
+        patch.status = 'working'
+        patch.lastLine = ''
+        break
+      case 'PreToolUse':
+        patch.status = 'working'
+        if (ev.toolName) patch.lastLine = `▸ ${ev.toolName}`
+        break
+      case 'PermissionRequest':
+      case 'Notification':
+        patch.status = 'waiting'
+        patch.lastLine = ev.message || (ev.toolName ? `permission: ${ev.toolName}` : 'needs your input')
+        break
+      case 'Stop':
+        patch.status = 'done'
+        break
+      case 'SessionEnd':
+        patch.status = 'idle'
+        break
+    }
+    useStore.getState().patchTerminal(ev.terminalId, patch)
+    if (patch.status && patch.status !== tab.status && (patch.status === 'waiting' || patch.status === 'done')) {
+      notify(tab, patch.status, patch.lastLine ?? tab.lastLine)
+    }
+  })
+
   setInterval(() => {
     const now = Date.now()
     const { terminals, patchTerminal } = useStore.getState()
     for (const id in terminals) {
       const tab = terminals[id]!
-      if (tab.kind !== 'agent' || tab.exited) continue
+      if (tab.kind !== 'agent' || tab.exited || tab.hooked) continue
       const inst = reg.get(id)
       if (!inst) continue
       if (now - inst.lastActivity > 1200) {

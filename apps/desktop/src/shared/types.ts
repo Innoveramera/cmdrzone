@@ -32,6 +32,10 @@ export interface ProjectNode {
   defaultProviderId?: string
   /** per-project Figma file/proto URL (project override; empty/undefined = not connected) */
   figmaUrl?: string
+  /** set on worktree child nodes: absolute path of the main repo this is a worktree of */
+  worktreeOf?: string
+  /** git branch checked out in this worktree (worktree nodes only) */
+  branch?: string
   lastOpenedAt?: number
   hasClaudeMd: boolean
   hasTasksMd: boolean
@@ -127,4 +131,34 @@ export interface RenameResult {
   ok: boolean
   newPath?: string
   error?: string
+}
+
+/** Result of a git-worktree operation (add / remove / merge). */
+export interface WorktreeOpResult {
+  ok: boolean
+  /** absolute path of the created worktree (add) */
+  path?: string
+  /** branch created for / checked out in the worktree (add) */
+  branch?: string
+  error?: string
+}
+
+/**
+ * A Claude Code hook event forwarded to the renderer. Emitted by the local hook server when a
+ * session launched by CmdrZone reports lifecycle events (SessionStart / UserPromptSubmit /
+ * PreToolUse / PermissionRequest / Stop / SessionEnd) — the authoritative agent-status source.
+ */
+export interface AgentHookEvent {
+  /** CmdrZone terminal-tab id (from CMDRZONE_SESSION_ID in the session's env) */
+  terminalId: string
+  /** raw hook_event_name, e.g. 'Stop' */
+  event: string
+  toolName?: string
+  message?: string
+  /** Claude Code's own session uuid — enables future `claude --resume <id>` */
+  claudeSessionId?: string
+  transcriptPath?: string
+  cwd?: string
+  /** SessionStart source: startup | resume | clear | compact */
+  source?: string
 }

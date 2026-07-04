@@ -21,7 +21,9 @@ import { initDatabase, closeDatabase, getDb } from '@core/persistence/database'
 import { scanProjects } from '@core/projects/scanner'
 import { gitStatus } from '@core/projects/git'
 import { renameProjectFolder } from '@core/projects/rename'
+import { attachWorktrees, addWorktree, removeWorktree, mergeWorktree } from '@core/projects/worktrees'
 import { detectProviders } from '@core/agents/providers'
+import { createHookServer, buildHooksSettings } from '@core/agents/hook-server'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
 import {
@@ -111,6 +113,8 @@ function getRoots(): string[] {
 function scanAll(): ProjectNode[] {
   const nodes = scanProjects(getRoots())
   applyPrefs(nodes, getAllPrefs())
+  // Worktree children attach AFTER prefs so they inherit the parent's final color.
+  attachWorktrees(nodes, shellEnv)
   return nodes
 }
 
@@ -125,11 +129,14 @@ let allowQuit = false
 // classic non-durable way and everything below degrades to no-ops.
 let tmuxRef: TmuxRef | null = null
 let tmuxEnv: NodeJS.ProcessEnv = {}
+// Composed login-shell env for sync git calls (worktrees) — set once tmux setup has probed it.
+let shellEnv: NodeJS.ProcessEnv = process.env
 
 /** Detect tmux and write our config once. Safe to call when tmux is absent (leaves ref null). */
 async function setupTmux(): Promise<void> {
   try {
     const c = await composeEnv(['tmux'])
+    shellEnv = c.env
     const bin = c.resolved.tmux
     if (!bin) return
     const conf = join(app.getPath('userData'), 'tmux.conf')
@@ -139,6 +146,67 @@ async function setupTmux(): Promise<void> {
   } catch {
     tmuxRef = null
   }
+}
+
+// Claude Code hook endpoint: sessions POST lifecycle events here (see core/agents/hook-server).
+// Port + token persist across restarts so tmux-durable sessions keep reporting to the new app.
+let hooksFile: string | null = null
+
+async function setupAgentHooks(): Promise<void> {
+  try {
+    let token = getSetting('hookToken', '')
+    if (!token) {
+      token = randomUUID()
+      setSetting('hookToken', token)
+    }
+    const preferred = parseInt(getSetting('hookPort', '0'), 10) || 0
+    const srv = await createHookServer({
+      preferredPort: preferred,
+      token,
+      onEvent: (terminalId, ev) => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send(IPC.agentHookEvent, { terminalId, ...ev })
+        }
+      }
+    })
+    setSetting('hookPort', String(srv.port))
+    const file = join(app.getPath('userData'), 'claude-hooks.json')
+    writeFileSync(file, buildHooksSettings(srv.port, token), 'utf8')
+    hooksFile = file
+  } catch {
+    hooksFile = null // status falls back to the output heuristic
+  }
+}
+
+/**
+ * Wire a Claude Code launch up to the hook server: tag the session with its terminal id
+ * (CMDRZONE_SESSION_ID) and load our generated hook settings. `env(1)` keeps the inject
+ * variant portable across zsh/bash/fish. Other providers/kinds pass through untouched.
+ */
+function wrapForHooks(opts: PtyCreateOptions): PtyCreateOptions {
+  if (!hooksFile || opts.providerId !== 'claude-code') return opts
+  if (opts.spawn) {
+    return {
+      ...opts,
+      spawn: {
+        command: '/usr/bin/env',
+        args: [
+          `CMDRZONE_SESSION_ID=${opts.id}`,
+          opts.spawn.command,
+          '--settings',
+          hooksFile,
+          ...opts.spawn.args
+        ]
+      }
+    }
+  }
+  if (opts.initialCommand) {
+    return {
+      ...opts,
+      initialCommand: `env CMDRZONE_SESSION_ID=${opts.id} ${opts.initialCommand} --settings "${hooksFile}"`
+    }
+  }
+  return opts
 }
 
 const tmuxCtx = (): TmuxCtx | null => (tmuxRef ? { ...tmuxRef, env: tmuxEnv } : null)
@@ -251,7 +319,7 @@ function createWindow(): void {
 function registerIpc(): void {
   ipcMain.handle(IPC.ptyCreate, (_e, opts: PtyCreateOptions) => {
     // When durable, hand the host a tmux ref so it attaches-or-creates a persistent session.
-    ptyHost?.postMessage({ type: 'create', payload: opts, tmux: durableEnabled() ? tmuxRef : undefined })
+    ptyHost?.postMessage({ type: 'create', payload: wrapForHooks(opts), tmux: durableEnabled() ? tmuxRef : undefined })
   })
 
   ipcMain.on(IPC.ptyInput, (_e, p: PtyInputPayload) => {
@@ -321,6 +389,47 @@ function registerIpc(): void {
   })
 
   ipcMain.handle(IPC.agentsList, () => detectProviders())
+
+  // Git worktrees (parallel agents). Destructive ops confirm in main, like projectsRename.
+  ipcMain.handle(
+    IPC.worktreeAdd,
+    (_e, { projectPath, name }: { projectPath: string; name: string }) =>
+      addWorktree(projectPath, name, shellEnv)
+  )
+  ipcMain.handle(
+    IPC.worktreeRemove,
+    (_e, { projectPath, worktreePath }: { projectPath: string; worktreePath: string }) => {
+      const choice = win
+        ? dialog.showMessageBoxSync(win, {
+            type: 'warning',
+            buttons: ['Remove', 'Cancel'],
+            defaultId: 1,
+            cancelId: 1,
+            message: `Remove worktree "${basename(worktreePath)}"?`,
+            detail: 'Its branch and any unmerged or uncommitted changes are discarded.'
+          })
+        : 0
+      if (choice === 1) return { ok: false, error: 'cancelled' }
+      return removeWorktree(projectPath, worktreePath, shellEnv)
+    }
+  )
+  ipcMain.handle(
+    IPC.worktreeMerge,
+    (_e, { projectPath, worktreePath }: { projectPath: string; worktreePath: string }) => {
+      const choice = win
+        ? dialog.showMessageBoxSync(win, {
+            type: 'question',
+            buttons: ['Merge & remove', 'Cancel'],
+            defaultId: 0,
+            cancelId: 1,
+            message: `Merge worktree "${basename(worktreePath)}" into ${basename(projectPath)}?`,
+            detail: 'Merges its branch into the current branch of the main project, then removes the worktree.'
+          })
+        : 0
+      if (choice === 1) return { ok: false, error: 'cancelled' }
+      return mergeWorktree(projectPath, worktreePath, shellEnv)
+    }
+  )
 
   ipcMain.handle(IPC.fsReadDir, (_e, p: string) => readDir(p))
   ipcMain.handle(IPC.fsReadFile, (_e, p: string) => readTextFile(p))
@@ -521,6 +630,7 @@ app.whenReady().then(async () => {
     if (!icon.isEmpty()) app.dock.setIcon(icon)
   }
 
+  await setupAgentHooks()
   createWindow()
 
   app.on('activate', () => {

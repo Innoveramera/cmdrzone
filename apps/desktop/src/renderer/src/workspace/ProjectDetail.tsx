@@ -8,6 +8,7 @@ import { ProjectInfo } from './ProjectInfo'
 import { ProjectEditor } from './ProjectEditor'
 import { ProjectBoard } from './ProjectBoard'
 import { ProjectDesign } from './ProjectDesign'
+import { WorktreeBar } from './WorktreeBar'
 
 // Right pane of the master-detail layout. Three modes — Terminals (sessions + info),
 // Editor (files + code), Board (ideas/features/bugs). Terminals + Editor stay mounted so
@@ -15,9 +16,15 @@ import { ProjectDesign } from './ProjectDesign'
 export function ProjectDetail({ project }: { project: ProjectNode }) {
   const collapsed = useStore((s) => s.infoCollapsed)
   const mode = useStore((s) => s.detailMode)
+  // A worktree shares its MAIN project's board — cards live on the stable repo path, so the
+  // same board follows the work whether you view the repo or any of its worktrees.
+  const boardProject = useStore((s) =>
+    project.worktreeOf ? s.flat.find((p) => p.id === project.worktreeOf) ?? project : project
+  )
 
   return (
     <div className="detail-pane">
+      {project.worktreeOf && <WorktreeBar project={project} />}
       <div className="detail-tabs">
         <button
           className={`dtab ${mode === 'board' ? 'on' : ''}`}
@@ -61,7 +68,7 @@ export function ProjectDetail({ project }: { project: ProjectNode }) {
         </div>
         {mode === 'board' && (
           <div className="dmode">
-            <ProjectBoard project={project} />
+            <ProjectBoard project={boardProject} />
           </div>
         )}
         {mode === 'design' && (

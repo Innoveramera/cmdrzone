@@ -7,6 +7,7 @@ import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
 import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
 import { statusRank } from '../lib/format'
+import { agentLaunchOpts } from '../lib/agents'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
@@ -28,6 +29,10 @@ export interface TerminalTab {
   port?: number
   /** if set, the terminal spawns this process directly instead of shell + inject */
   spawn?: { command: string; args: string[] }
+  /** true once a Claude Code hook has reported — status is then authoritative, heuristics off */
+  hooked?: boolean
+  /** Claude Code's own session uuid (from SessionStart) — enables `--resume <id>` later */
+  claudeSessionId?: string
 }
 
 /** A tab in the deck = a group of one or more terminal panes, split row/col. */
@@ -59,11 +64,15 @@ let seq = 0
 const uid = (p: string) => `${p}-${++seq}-${Date.now()}`
 
 function flatten(nodes: ProjectNode[]): ProjectNode[] {
+  // Recursive: group → project → worktree can nest three levels deep.
   const out: ProjectNode[] = []
-  for (const n of nodes) {
-    out.push(n)
-    if (n.children) out.push(...n.children)
+  const walk = (ns: ProjectNode[]): void => {
+    for (const n of ns) {
+      out.push(n)
+      if (n.children) walk(n.children)
+    }
   }
+  walk(nodes)
   return out
 }
 
@@ -141,6 +150,12 @@ interface Store {
   patchTerminal: (id: string, patch: Partial<TerminalTab>) => void
   togglePin: (node: ProjectNode) => Promise<void>
   renameProject: (oldPath: string, newName: string) => Promise<void>
+  /** create a git worktree + launch the project's agent in it; resolves an error string or null */
+  createWorktreeAgent: (projectId: string, name: string) => Promise<string | null>
+  /** merge a worktree's branch into the main repo and remove it; error string or null */
+  mergeWorktree: (node: ProjectNode) => Promise<string | null>
+  /** discard + remove a worktree; error string or null */
+  removeWorktree: (node: ProjectNode) => Promise<string | null>
   loadGit: (path: string) => Promise<void>
   /** probe version + changelog + updater state, subscribe to changes, show What's New once per version */
   initUpdates: () => Promise<void>
@@ -471,6 +486,36 @@ export const useStore = create<Store>((set, get) => ({
     set((s) => ({ gitByPath: { ...s.gitByPath, [path]: git } }))
   },
 
+  createWorktreeAgent: async (projectId, name) => {
+    const parent = get().findProject(projectId)
+    const res = await window.api.worktrees.add(projectId, name)
+    if (!res.ok || !res.path) return res.error ?? 'Could not create the worktree.'
+    await get().refresh()
+    get().selectProject(res.path)
+    get().setDetailMode('terminals')
+    // Launch with the PARENT's provider preference — the worktree has no overrides of its own.
+    get().newTerminal(res.path, agentLaunchOpts(get().agents, parent))
+    return null
+  },
+
+  mergeWorktree: async (node) => {
+    if (!node.worktreeOf) return 'Not a worktree.'
+    const res = await window.api.worktrees.merge(node.worktreeOf, node.path)
+    if (!res.ok) return res.error === 'cancelled' ? null : res.error ?? 'Merge failed.'
+    finishWorktreeRemoval(get, node)
+    await get().refresh()
+    return null
+  },
+
+  removeWorktree: async (node) => {
+    if (!node.worktreeOf) return 'Not a worktree.'
+    const res = await window.api.worktrees.remove(node.worktreeOf, node.path)
+    if (!res.ok) return res.error === 'cancelled' ? null : res.error ?? 'Remove failed.'
+    finishWorktreeRemoval(get, node)
+    await get().refresh()
+    return null
+  },
+
   initUpdates: async () => {
     const [version, changelog, update] = await Promise.all([
       window.api.app.version(),
@@ -514,6 +559,17 @@ export const useStore = create<Store>((set, get) => ({
 
   closeSettings: () => set({ settingsOpen: false })
 }))
+
+// After a worktree is gone on disk: end its sessions (their cwd was just deleted) and move the
+// selection to the parent project so the UI never points at a dead node.
+function finishWorktreeRemoval(get: () => Store, node: ProjectNode): void {
+  const s = get()
+  const ids = Object.values(s.terminals)
+    .filter((t) => t.projectId === node.path)
+    .map((t) => t.id)
+  for (const id of ids) get().closeTerminal(id)
+  if (node.worktreeOf) get().selectProject(node.worktreeOf)
+}
 
 export const SIDEBAR_MIN = 180
 export const SIDEBAR_MAX = 520

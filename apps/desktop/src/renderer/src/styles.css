@@ -547,3 +547,24 @@ input { font-family: inherit; }
 .wn-list li { margin: 4px 0; line-height: 1.5; }
 .wn-content code { background: #1a2030; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
 
+/* ---------- Git worktrees (parallel agents) ---------- */
+.twt { color: var(--accent); }
+.wt-pop {
+  flex: none; display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--panel);
+}
+.wt-pop-title { font-weight: 600; font-size: 13px; }
+.wt-pop .small { max-width: 620px; line-height: 1.5; }
+.wt-pop code { background: #1a2030; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+.wt-pop-row { display: flex; align-items: center; gap: 8px; }
+.wt-pop-row .select { width: min(320px, 60%); }
+.wt-pop .err { color: var(--red); font-size: 12px; }
+.wt-bar {
+  flex: none; display: flex; align-items: center; gap: 10px; min-height: 34px;
+  padding: 4px 12px; border-bottom: 1px solid var(--border); background: var(--panel2);
+}
+.wt-branch { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.wt-bar .err.wt-err {
+  color: var(--red); font-size: 11px; max-width: 45%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

@@ -6,22 +6,7 @@ import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
 import { STATUS_META } from '../lib/format'
 import { imageFilesFrom, droppedImagePath, quotePath } from '../lib/images'
-
-function launchCommandFor(id?: string): string {
-  switch (id) {
-    case 'aider':
-      return 'aider'
-    case 'codex':
-      return 'codex'
-    case 'gemini':
-      return 'gemini'
-    case 'opencode':
-      return 'opencode'
-    case 'claude-code':
-    default:
-      return 'claude'
-  }
-}
+import { agentLaunchOpts, resolveProvider } from '../lib/agents'
 
 export function TerminalDeck({ projectId }: { projectId: string }) {
   const terminals = useStore((s) => s.terminals)
@@ -31,8 +16,14 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
   const agents = useStore((s) => s.agents)
   const project = useStore((s) => s.findProject(projectId))
   const durable = useStore((s) => s.durable)
+  const git = useStore((s) => (project ? s.gitByPath[project.path] : undefined))
   // Which pane is under an active image drag (for the drop overlay).
   const [dropPane, setDropPane] = useState<string | null>(null)
+  // "New agent in worktree" popover state.
+  const [wtOpen, setWtOpen] = useState(false)
+  const [wtName, setWtName] = useState('')
+  const [wtBusy, setWtBusy] = useState(false)
+  const [wtErr, setWtErr] = useState<string | null>(null)
 
   // Save the dropped image(s) and type their path(s) into the pane's PTY — no Enter, so the
   // user can add context and submit. Claude Code reads the image straight from the path.
@@ -49,30 +40,23 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
     .map((g) => groups[g])
     .filter((g): g is NonNullable<typeof g> => !!g && g.projectId === projectId)
 
-  const resolveProvider = () => {
-    const wantId = project?.defaultProviderId ?? 'claude-code'
-    return (
-      agents.find((a) => a.id === wantId && a.installed) ??
-      agents.find((a) => a.isDefault) ??
-      agents.find((a) => a.installed)
-    )
-  }
+  const newAgent = (resume = false) =>
+    useStore.getState().newTerminal(projectId, agentLaunchOpts(agents, project, resume))
+  const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
+  const agentName = resolveProvider(agents, project)?.name ?? 'Claude'
 
-  const agentOpts = (resume = false) => {
-    const prov = resolveProvider()
-    const pid = prov?.id ?? 'claude-code'
-    const base = launchCommandFor(pid)
-    return {
-      kind: 'agent' as const,
-      providerId: prov?.id,
-      title: resume ? 'Claude ↻' : prov?.name ?? 'Claude',
-      initialCommand: resume && pid === 'claude-code' ? `${base} --continue` : base
+  const createWorktree = async (): Promise<void> => {
+    if (wtBusy || !wtName.trim()) return
+    setWtBusy(true)
+    setWtErr(null)
+    const err = await useStore.getState().createWorktreeAgent(projectId, wtName)
+    setWtBusy(false)
+    if (err) setWtErr(err)
+    else {
+      setWtOpen(false)
+      setWtName('')
     }
   }
-
-  const newAgent = (resume = false) => useStore.getState().newTerminal(projectId, agentOpts(resume))
-  const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
-  const agentName = resolveProvider()?.name ?? 'Claude'
 
   return (
     <div className="deck">
@@ -124,6 +108,15 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
         <button className="tab add" onClick={newShell} title="New shell">
           ＋ $ Shell
         </button>
+        {git?.isRepo && !project?.worktreeOf && (
+          <button
+            className={`tab add ${wtOpen ? 'active' : ''}`}
+            onClick={() => setWtOpen((o) => !o)}
+            title="New agent in an isolated git worktree — work in parallel on its own branch, no file collisions"
+          >
+            ＋ ⎇ Worktree
+          </button>
+        )}
         <span className="spacer" />
         {durable?.available ? (
           <button
@@ -143,6 +136,35 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
           </span>
         )}
       </div>
+
+      {wtOpen && (
+        <div className="wt-pop">
+          <div className="wt-pop-title">⎇ New agent in a git worktree</div>
+          <div className="muted small">
+            Creates an isolated checkout on branch <code>cz/&lt;name&gt;</code> and launches{' '}
+            {agentName} there — run agents in parallel without stepping on each other. Merge it
+            back (or discard it) from the worktree's banner when done.
+          </div>
+          <div className="wt-pop-row">
+            <input
+              className="select"
+              autoFocus
+              placeholder="name, e.g. fix-login"
+              value={wtName}
+              disabled={wtBusy}
+              onChange={(e) => setWtName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void createWorktree()
+                else if (e.key === 'Escape') setWtOpen(false)
+              }}
+            />
+            <button className="ghost" disabled={wtBusy || !wtName.trim()} onClick={() => void createWorktree()}>
+              {wtBusy ? 'Creating…' : `Create & launch ${agentName}`}
+            </button>
+          </div>
+          {wtErr && <div className="err">{wtErr}</div>}
+        </div>
+      )}
 
       <div className="deck-body">
         {myGroups.length === 0 && (

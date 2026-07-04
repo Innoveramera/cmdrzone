@@ -12,6 +12,10 @@ export const IPC = {
   projectSetPref: 'projects:setPref',
   projectsRename: 'projects:rename',
   agentsList: 'agents:list',
+  // git worktrees (parallel agents)
+  worktreeAdd: 'worktrees:add',
+  worktreeRemove: 'worktrees:remove',
+  worktreeMerge: 'worktrees:merge',
   fsReadDir: 'fs:readDir',
   fsReadFile: 'fs:readFile',
   fsWriteFile: 'fs:writeFile',
@@ -53,7 +57,9 @@ export const IPC = {
   ptyData: 'pty:data',
   ptyExit: 'pty:exit',
   /** pushed whenever the updater's state changes */
-  updateState: 'update:state'
+  updateState: 'update:state',
+  /** Claude Code hook event for a terminal (authoritative agent status) */
+  agentHookEvent: 'agentHook:event'
 } as const
 
 export interface PtyCreateOptions {
@@ -65,6 +71,8 @@ export interface PtyCreateOptions {
   initialCommand?: string
   /** if set, spawn this process directly (argv, no shell) instead of shell + inject */
   spawn?: { command: string; args: string[] }
+  /** agent provider launching in this terminal; main wires Claude Code up to the hook server */
+  providerId?: string
 }
 
 export interface PtyInputPayload {
