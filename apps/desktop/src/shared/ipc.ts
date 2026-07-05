@@ -39,6 +39,8 @@ export const IPC = {
   durableStatus: 'durable:status',
   durableSetEnabled: 'durable:setEnabled',
   durableList: 'durable:list',
+  /** aggregate token usage/cost from Claude Code's JSONL transcripts */
+  usageScan: 'usage:scan',
   // app version + in-app updates + changelog
   appGetVersion: 'app:getVersion',
   updateCheck: 'update:check',

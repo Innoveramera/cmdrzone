@@ -5,6 +5,7 @@ import { create } from 'zustand'
 import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
 import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
+import type { UsageSnapshot } from '@shared/usage'
 import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
 import { statusRank } from '../lib/format'
 import { agentLaunchOpts } from '../lib/agents'
@@ -121,8 +122,13 @@ interface Store {
   theme: ThemeId
   /** whether the Settings dialog is open */
   settingsOpen: boolean
+  /** Claude Code token usage/cost aggregates (dashboard widget); null until scanned */
+  usage: UsageSnapshot | null
+  usageLoading: boolean
 
   refresh: () => Promise<void>
+  /** (re)scan Claude Code transcripts for the usage widget */
+  loadUsage: () => Promise<void>
   /** probe tmux + reattach any background sessions that are still alive */
   restoreWorkspace: () => Promise<void>
   toggleDurable: () => Promise<void>
@@ -208,6 +214,19 @@ export const useStore = create<Store>((set, get) => ({
   whatsNewOpen: false,
   theme: 'dark',
   settingsOpen: false,
+  usage: null,
+  usageLoading: false,
+
+  loadUsage: async () => {
+    if (get().usageLoading) return
+    set({ usageLoading: true })
+    try {
+      const usage = await window.api.usage.scan()
+      set({ usage, usageLoading: false })
+    } catch {
+      set({ usageLoading: false })
+    }
+  },
 
   refresh: async () => {
     const [projects, agents, roots] = await Promise.all([

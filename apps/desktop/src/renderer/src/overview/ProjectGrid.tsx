@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import type { ProjectType } from '@shared/types'
 import { useStore } from '../state/store'
 import { ProjectCard } from './ProjectCard'
+import { UsageDashboard } from './UsageDashboard'
 import { statusRank, summarizeProject } from '../lib/format'
 
 const TYPES: { key: ProjectType | 'all'; label: string }[] = [
@@ -50,6 +51,7 @@ export function ProjectGrid() {
 
   return (
     <div className="overview">
+      <UsageDashboard />
       <div className="filterbar">
         <input
           className="search"

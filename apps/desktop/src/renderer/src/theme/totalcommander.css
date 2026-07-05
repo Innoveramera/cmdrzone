@@ -32,6 +32,13 @@ html[data-theme="totalcommander"] {
   --chip-bg: #c0c0c0;
   --badge-bg: #a0a0a0;
   --dim: #808080;
+  /* Chart colors (usage widget) — light-mode steps validated against the silver surface. */
+  --viz-1: #2a78d6;
+  --viz-2: #1baf7a;
+  --viz-3: #eda100;
+  --viz-4: #4a3aa7;
+  --viz-other: #5a5a5a;
+  --viz-seq: #2a78d6;
 
   font-family: "MS Sans Serif", "Tahoma", "Geneva", Verdana, "Segoe UI", sans-serif;
 }

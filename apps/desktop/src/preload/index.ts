@@ -93,6 +93,9 @@ const api: DesktopApi = {
     pathForFile: (file) => webUtils.getPathForFile(file),
     saveTemp: (name, bytes) => ipcRenderer.invoke(IPC.mediaSaveTemp, { name, bytes })
   },
+  usage: {
+    scan: () => ipcRenderer.invoke(IPC.usageScan)
+  },
   app: {
     version: () => ipcRenderer.invoke(IPC.appGetVersion)
   },

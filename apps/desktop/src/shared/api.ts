@@ -24,6 +24,7 @@ import type {
 } from './types'
 import type { DurableStatus } from './tmux'
 import type { UpdateState, ChangelogEntry } from './update'
+import type { UsageSnapshot } from './usage'
 
 export interface DesktopApi {
   pty: {
@@ -105,6 +106,10 @@ export interface DesktopApi {
     pathForFile(file: File): string
     /** persist dropped image bytes to a temp file; resolves with the absolute path */
     saveTemp(name: string, bytes: Uint8Array): Promise<string>
+  }
+  usage: {
+    /** aggregate token usage/cost per (project, day, model) from Claude Code transcripts */
+    scan(): Promise<UsageSnapshot>
   }
   app: {
     /** the running app version (from package.json) */

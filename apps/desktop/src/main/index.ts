@@ -25,6 +25,7 @@ import { attachWorktrees, addWorktree, removeWorktree, mergeWorktree } from '@co
 import { detectProviders } from '@core/agents/providers'
 import { createHookServer, buildHooksSettings } from '@core/agents/hook-server'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
+import { scanUsage } from '@core/usage/transcripts'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
 import {
   getBoard,
@@ -503,6 +504,8 @@ function registerIpc(): void {
     setSetting('roots', JSON.stringify(roots))
     return roots
   })
+
+  ipcMain.handle(IPC.usageScan, () => scanUsage())
 
   ipcMain.handle(IPC.appGetVersion, () => app.getVersion())
   ipcMain.handle(IPC.updateCheck, () => checkForUpdates())

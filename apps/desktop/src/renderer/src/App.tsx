@@ -56,6 +56,7 @@ export function App() {
       await useStore.getState().restoreWorkspace()
     })()
     void useStore.getState().initUpdates()
+    void useStore.getState().loadUsage()
   }, [])
 
   useEffect(() => {
