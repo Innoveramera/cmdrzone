@@ -8,6 +8,42 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.3.0] - 2026-07-05
+
+### Added
+
+- **Exact agent status via Claude Code hooks.** CmdrZone now wires every Claude Code session
+  up to a local hook endpoint, so working / waiting / done comes from Claude's own lifecycle
+  events instead of terminal-output guessing. The agent rail shows the tool being run
+  (`▸ Bash`, `▸ Edit`…), notifications carry the actual permission question, and status keeps
+  flowing across app restarts for durable (tmux) sessions. Other agents (Aider, Codex, …)
+  keep the old heuristic as a fallback.
+- **Parallel agents in git worktrees.** The **＋ ⎇ Worktree** button in the terminal deck
+  creates an isolated checkout on its own `cz/<name>` branch and launches the project's agent
+  there — run several agents on the same repo without file collisions. Worktrees appear as ⎇
+  children in the project tree (own status pill, git state, ⌘⌥←/→ cycling), share the main
+  project's board, and a banner offers **Merge & remove** (conflicts abort safely) or
+  **Discard** when the work is done.
+- **Design tab (F6).** Paste a Figma file / prototype / FigJam link and it renders live in the
+  new 🎨 Design tab next to your agents. Sign-in works inside the embed, deep links to a
+  specific frame are kept, and the connection persists per project.
+- **Themes + Total Commander skin.** A theme system with a retro Total Commander look,
+  including a function-key bar (F2 Dash · F3 Board · F4 Editor · F5 Terminals · F6 Design ·
+  F7 Shell · F8 Close · F10 Menu).
+- **Terminal quality-of-life.** Select and copy text with a plain click-drag even while an
+  agent TUI has mouse reporting on (copy-on-select included), and **Shift+Enter** inserts a
+  newline at agent prompts instead of submitting.
+- **⌘⌥←/→** cycles between projects that have an open agent, attention-first (waiting →
+  error → working → done).
+
+### Changed
+
+- **Electron 33 → 39** (Chromium security fixes) and matching electron-builder updates.
+
+### Fixed
+
+- Pinned projects no longer highlight twice in the sidebar (Pinned + All projects).
+
 ## [0.2.0] - 2026-06-19
 
 ### Added
