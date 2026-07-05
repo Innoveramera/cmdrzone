@@ -4,19 +4,26 @@
 import { useState } from 'react'
 import type { ProjectNode } from '@shared/types'
 import { useStore } from '../state/store'
-import { summarizeProject, STATUS_META } from '../lib/format'
+import { summarizeProject, statusRank, STATUS_META } from '../lib/format'
+
+const COLLAPSE_KEY = 'cmdrzone.tree.collapsed'
+
+function loadCollapsed(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '{}') as Record<string, boolean>
+  } catch {
+    return {}
+  }
+}
 
 function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?: boolean }) {
-  // A pinned project is rendered twice (Pinned + All projects); `flat` marks the
-  // Pinned-section copy. Only highlight the instance that was actually selected.
-  const selected = useStore((s) => s.selectedProjectId === node.id && s.selectedPinned === !!flat)
+  const selected = useStore((s) => s.selectedProjectId === node.id)
   const terminals = useStore((s) => s.terminals)
   const git = useStore((s) => s.gitByPath[node.path])
   const sum = summarizeProject(node.id, terminals)
   const st = STATUS_META[sum.status]
   const parent = flat ? node.parentPath?.split('/').pop() : undefined
-  // open non-agent session (agent sessions already show a status pill)
-  const hasSession = sum.agentCount === 0 && sum.termCount > 0
+  const dirty = git?.isRepo ? git.dirty : 0
   const [renaming, setRenaming] = useState(false)
   const [name, setName] = useState(node.name)
 
@@ -27,11 +34,18 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
     else setName(node.name)
   }
 
+  // One indicator per row (agent status > open session > dirty); the rest lives here.
+  const hint = [node.path]
+  if (sum.agentCount > 0) hint.push(`agent ${st.label.toLowerCase()}`)
+  if (sum.termCount > 0) hint.push(`${sum.termCount} open terminal${sum.termCount > 1 ? 's' : ''}`)
+  if (dirty > 0) hint.push(`${dirty} modified file${dirty > 1 ? 's' : ''}`)
+  if (!node.worktreeOf) hint.push('double-click name to rename')
+
   return (
     <div
       className={`trow ${child ? 'child' : ''} ${selected ? 'sel' : ''}`}
-      onClick={() => !renaming && useStore.getState().selectProject(node.id, !!flat)}
-      title={`${node.path}\n(double-click name to rename)`}
+      onClick={() => !renaming && useStore.getState().selectProject(node.id)}
+      title={hint.join('\n')}
     >
       <span className="tdot2" style={{ background: node.color }} />
       {renaming ? (
@@ -65,33 +79,40 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
         </span>
       )}
       {!renaming && parent && <span className="tparent">{parent}</span>}
-      {!renaming && sum.agentCount > 0 && <span className={`pill sm ${st.cls}`}>{st.glyph}</span>}
-      {!renaming && hasSession && (
-        <span className="tsession" title="open session">
-          ●
+      {!renaming && (
+        <span className="tind">
+          {sum.agentCount > 0 ? (
+            <span className={`sdot ${st.cls}`} />
+          ) : sum.termCount > 0 ? (
+            <span className="sdot session" />
+          ) : dirty > 0 ? (
+            <span className="tdirty">✎</span>
+          ) : null}
         </span>
       )}
-      {!renaming && git?.isRepo && git.dirty > 0 && <span className="tdirty">✎{git.dirty}</span>}
-      {!renaming && !node.worktreeOf && (
-        <span
-          className={`tstar ${node.isPinned ? 'on' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            void useStore.getState().togglePin(node)
-          }}
-        >
-          {node.isPinned ? '★' : '☆'}
-        </span>
-      )}
+      {!renaming &&
+        (node.worktreeOf ? (
+          <span className="tstar" />
+        ) : (
+          <span
+            className={`tstar ${node.isPinned ? 'on' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              void useStore.getState().togglePin(node)
+            }}
+          >
+            {node.isPinned ? '★' : '☆'}
+          </span>
+        ))}
     </div>
   )
 }
 
 /** A project row plus its git-worktree children (parallel-agent checkouts), indented below. */
-function ProjectRow({ node, child }: { node: ProjectNode; child?: boolean }) {
+function ProjectRow({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?: boolean }) {
   return (
     <>
-      <Row node={node} child={child} />
+      <Row node={node} child={child} flat={flat} />
       {node.children?.map((w) => (
         <Row key={w.id} node={w} child />
       ))}
@@ -99,23 +120,53 @@ function ProjectRow({ node, child }: { node: ProjectNode; child?: boolean }) {
   )
 }
 
-function GroupRow({ node }: { node: ProjectNode }) {
-  const [open, setOpen] = useState(true)
+function GroupRow({
+  node,
+  open,
+  onToggle,
+  hide
+}: {
+  node: ProjectNode
+  open: boolean
+  onToggle: () => void
+  hide: Set<string>
+}) {
+  const kids = (node.children ?? []).filter((c) => !hide.has(c.id))
+  if (kids.length === 0) return null
   return (
     <div className="tgroup">
-      <div className="trow grouphdr" onClick={() => setOpen((o) => !o)}>
+      <div className="trow grouphdr" onClick={onToggle}>
         <span className="tchev">{open ? '▾' : '▸'}</span>
-        <span className="tfolder">{open ? '📂' : '📁'}</span>
         <span className="tname">{node.name}</span>
-        <span className="tcount">{node.children?.length ?? 0}</span>
+        <span className="tcount">{kids.length}</span>
       </div>
-      {open && node.children && (
+      {open && (
         <div className="tchildren">
-          {node.children.map((c) => (
+          {kids.map((c) => (
             <ProjectRow key={c.id} node={c} child />
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function Section({
+  label,
+  count,
+  open,
+  onToggle
+}: {
+  label: string
+  count: number
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="tree-section" onClick={onToggle}>
+      <span className="tchev">{open ? '▾' : '▸'}</span>
+      <span className="tsec-label">{label}</span>
+      <span className="tcount">{count}</span>
     </div>
   )
 }
@@ -135,23 +186,55 @@ function flattenAll(projects: ProjectNode[]): ProjectNode[] {
 export function ProjectTree() {
   const projects = useStore((s) => s.projects)
   const rootPath = useStore((s) => s.rootPath)
+  const terminals = useStore((s) => s.terminals)
   const [q, setQ] = useState('')
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(loadCollapsed)
   const ql = q.toLowerCase()
 
-  const pinned = flattenAll(projects).filter((p) => p.isPinned)
-  const list = projects.filter(
-    (n) =>
-      !q ||
-      n.name.toLowerCase().includes(ql) ||
-      n.children?.some((c) => c.name.toLowerCase().includes(ql))
-  )
+  const toggle = (key: string) => {
+    setCollapsed((c) => {
+      const next = { ...c, [key]: !c[key] }
+      try {
+        localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore quota/privacy errors — collapse state is a nicety */
+      }
+      return next
+    })
+  }
+
+  const all = flattenAll(projects)
+
+  // Each project appears exactly once: Active (an agent runs on it or a worktree)
+  // takes precedence over Pinned, which takes precedence over All projects.
+  const isActive = (p: ProjectNode) =>
+    summarizeProject(p.id, terminals).agentCount > 0 ||
+    (p.children ?? []).some((w) => summarizeProject(w.id, terminals).agentCount > 0)
+
+  const bestRank = (p: ProjectNode): number => {
+    let r = statusRank(summarizeProject(p.id, terminals).status)
+    for (const w of p.children ?? []) r = Math.min(r, statusRank(summarizeProject(w.id, terminals).status))
+    return r
+  }
+
+  const active = all.filter(isActive).sort((a, b) => bestRank(a) - bestRank(b) || a.name.localeCompare(b.name))
+  const activeIds = new Set(active.map((p) => p.id))
+  const pinned = all.filter((p) => p.isPinned && !activeIds.has(p.id))
+  const shownAbove = new Set([...active, ...pinned].map((p) => p.id))
+  const rest = projects.filter((n) => n.kind === 'group' || !shownAbove.has(n.id))
+
+  const matches = q
+    ? all.filter(
+        (p) => p.name.toLowerCase().includes(ql) || p.children?.some((c) => c.name.toLowerCase().includes(ql))
+      )
+    : []
 
   return (
     <div className="tree">
       <div className="tree-head">
         <div className="root-row">
           <span className="root-label" title={rootPath}>
-            📁 {rootPath.split('/').pop() || 'Projects'}
+            {rootPath.split('/').pop() || 'Projects'}
           </span>
           <button className="mini" onClick={() => void useStore.getState().pickRoot()} title="Change folder">
             change
@@ -172,19 +255,60 @@ export function ProjectTree() {
         />
       </div>
       <div className="tree-body">
-        {!q && pinned.length > 0 && (
+        {q ? (
           <>
-            <div className="tree-section">★ Pinned</div>
-            {pinned.map((n) => (
-              <Row key={`pin-${n.id}`} node={n} flat />
+            {matches.map((n) => (
+              <ProjectRow key={n.id} node={n} flat />
             ))}
-            <div className="tree-section">All projects</div>
+            {matches.length === 0 && <div className="muted small pad">no matches</div>}
+          </>
+        ) : (
+          <>
+            {active.length > 0 && (
+              <>
+                <Section
+                  label="Active"
+                  count={active.length}
+                  open={!collapsed.active}
+                  onToggle={() => toggle('active')}
+                />
+                {!collapsed.active && active.map((n) => <ProjectRow key={n.id} node={n} flat />)}
+              </>
+            )}
+            {pinned.length > 0 && (
+              <>
+                <Section
+                  label="Pinned"
+                  count={pinned.length}
+                  open={!collapsed.pinned}
+                  onToggle={() => toggle('pinned')}
+                />
+                {!collapsed.pinned && pinned.map((n) => <ProjectRow key={n.id} node={n} flat />)}
+              </>
+            )}
+            <Section
+              label="All projects"
+              count={all.length - shownAbove.size}
+              open={!collapsed.all}
+              onToggle={() => toggle('all')}
+            />
+            {!collapsed.all &&
+              rest.map((n) =>
+                n.kind === 'group' ? (
+                  <GroupRow
+                    key={n.id}
+                    node={n}
+                    open={!collapsed[`g:${n.id}`]}
+                    onToggle={() => toggle(`g:${n.id}`)}
+                    hide={shownAbove}
+                  />
+                ) : (
+                  <ProjectRow key={n.id} node={n} />
+                )
+              )}
+            {all.length === 0 && <div className="muted small pad">no projects</div>}
           </>
         )}
-        {list.map((n) =>
-          n.kind === 'group' ? <GroupRow key={n.id} node={n} /> : <ProjectRow key={n.id} node={n} />
-        )}
-        {list.length === 0 && <div className="muted small pad">no projects</div>}
       </div>
     </div>
   )

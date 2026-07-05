@@ -467,7 +467,7 @@ input { font-family: inherit; }
 @keyframes modal-in { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-card, .board-col, .board-add-col, .card-launch, .modal, .modal-overlay, .drop-line { animation: none !important; transition: none !important; }
+  .board-card, .board-col, .board-add-col, .card-launch, .modal, .modal-overlay, .drop-line, .sdot { animation: none !important; transition: none !important; }
   .board-card:hover { transform: none; }
 }
 
@@ -484,26 +484,36 @@ input { font-family: inherit; }
 .trow:hover { background: var(--hover); }
 .trow.sel { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
 
-/* group folder header + its nested children with a vertical guide line */
-.tree-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 9px 12px 4px; }
+/* collapsible section headers (Active / Pinned / All projects) */
+.tree-section { display: flex; align-items: center; gap: 5px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 9px 12px 4px; cursor: pointer; user-select: none; }
+.tree-section:hover { color: var(--text); }
 .tparent { font-size: 10px; color: var(--muted); background: var(--hover); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; flex: none; }
 .trow-rename { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--accent); border-radius: 5px; padding: 2px 6px; color: var(--text); font-size: 12.5px; outline: none; }
-.tsession { color: var(--green); font-size: 8px; flex: none; }
+/* group header + its nested children with a vertical guide line */
 .tgroup { margin: 4px 0; }
-.trow.grouphdr { font-weight: 600; gap: 6px; }
-.trow.grouphdr:hover { background: var(--hover); }
-.tfolder { font-size: 11px; flex: none; }
+.trow.grouphdr { gap: 6px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+.trow.grouphdr:hover { background: var(--hover); color: var(--text); }
 .tchildren { margin-left: 19px; border-left: 1px solid var(--border2); }
 .trow.child { padding-left: 14px; }
 .tchev { width: 10px; color: var(--muted); flex: none; font-size: 10px; }
 .tdot2 { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .tname { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .tcount { font-size: 10px; color: var(--muted); background: var(--badge-bg); border-radius: 8px; padding: 0 6px; }
+/* fixed-width indicator column: agent status dot > open-session ring > dirty pen */
+.tind { width: 14px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.sdot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.sdot.st-idle { background: var(--muted); opacity: 0.45; }
+.sdot.st-working { background: var(--blue); animation: sdot-pulse 1.4s ease-in-out infinite; }
+.sdot.st-waiting { background: var(--amber); }
+.sdot.st-done { background: var(--green); }
+.sdot.st-error { background: var(--red); }
+.sdot.session { background: transparent; border: 1.5px solid var(--green); opacity: 0.8; }
+@keyframes sdot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .tdirty { font-size: 10px; color: var(--amber); }
-.tstar { color: #2c3340; font-size: 12px; }
-.tstar.on { color: var(--amber); }
-.trow:hover .tstar { color: var(--muted); }
-.trow .tstar.on { color: var(--amber); }
+/* star only appears on hover (or when pinned) — fixed width keeps rows aligned */
+.tstar { width: 13px; flex: none; text-align: center; font-size: 12px; visibility: hidden; color: var(--muted); }
+.tstar.on { visibility: visible; color: var(--amber); }
+.trow:hover .tstar { visibility: visible; }
 
 /* agent rail docked into the sidebar (overrides the standalone .rail above) */
 .rail { flex: none; max-height: 40%; width: auto; border-left: none; border-top: 1px solid var(--border); background: var(--panel2); }

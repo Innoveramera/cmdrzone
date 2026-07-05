@@ -39,7 +39,7 @@ html[data-theme="totalcommander"] {
 /* ---------- 2. Chrome ---------- */
 
 /* Square every corner (the era had no rounded anything) — keep status dots round. */
-html[data-theme="totalcommander"] *:not(.dot):not(.chip-dot):not(.tdot2) {
+html[data-theme="totalcommander"] *:not(.dot):not(.chip-dot):not(.tdot2):not(.sdot) {
   border-radius: 0 !important;
 }
 
