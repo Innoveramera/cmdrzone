@@ -8,6 +8,31 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.4.0] - 2026-07-21
+
+### Added
+
+- **Home mission-control dashboard.** The start view (no project selected) now opens with a
+  greeting hero — set your name once via **+ name** — showing a live clock and real telemetry:
+  agents live, **waiting on you**, overdue cards, up next, dirty repos, and today's Claude
+  spend. Below it, two aggregate panels: **Up next** gathers the To Do / In Progress cards
+  from *every* project's board (click a card to jump straight to its board), and **Agents**
+  lists live sessions attention-first. The dark theme gets a subtle holo glow and light sweep
+  (disabled with reduced motion); the Total Commander skin keeps its classic face.
+- **Due dates + priority on board cards.** Give any card a due date and a ★ priority star in
+  the card editor. Card faces and Up next show an urgency chip — quiet when distant, amber for
+  today/tomorrow, red when overdue — and the home hero warns when something is past due.
+  Up next sorts deadlines first (soonest on top), then starred cards, then column order.
+  Agents can set them too: `cmdrzone card add/update --due 2026-07-25|today|tomorrow`
+  `--prio|--no-prio`, and the MCP `create_card`/`update_card` tools take `due`/`priority`.
+- **New Project dialog (⌘N).** Describe your idea, get a ready folder under your projects
+  root — git initialized, CLAUDE.md seeded with the idea — and optionally launch Claude with
+  that idea as its very first prompt.
+
+### Changed
+
+- The Claude usage widget moved below the new Up next / Agents panels on the dashboard.
+
 ## [0.3.0] - 2026-07-05
 
 ### Added
