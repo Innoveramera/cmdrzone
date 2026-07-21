@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ProjectNode, BoardCard, BoardColumn, CardType, CardAttachment } from '@shared/types'
 import { useStore } from '../state/store'
 import { composePrompt } from '../lib/prompt'
+import { dueInfo, dueToInput, dueFromInput } from '../lib/format'
 import { imageFilesFrom, isImageFile, attachImageToCard } from '../lib/images'
 
 const TYPES: { key: CardType; label: string; emoji: string; cls: string }[] = [
@@ -413,6 +414,7 @@ function BoardCardView(props: {
   const tm = typeMeta(card.type)
   const preview = card.body ? snippet(card.body) : ''
   const atts = card.attachments ?? []
+  const due = dueInfo(card.dueAt)
   return (
     <div
       className={`board-card${props.isDragging ? ' dragging' : ''}`}
@@ -436,6 +438,11 @@ function BoardCardView(props: {
         <span className={`ctag ${tm.cls}`}>
           {tm.emoji} {tm.label}
         </span>
+        {(card.priority ?? 0) > 0 && (
+          <span className="prio-star" title="Priority — sorts first in Up next">
+            ★
+          </span>
+        )}
         {props.launchReady && (
           <button
             className="card-launch"
@@ -458,7 +465,10 @@ function BoardCardView(props: {
       <div className="board-card-title">{card.title}</div>
       {preview ? <div className="board-card-body">{preview}</div> : null}
       <div className="board-card-foot">
-        <span className="card-time">{relativeTime(card.updatedAt)}</span>
+        <span className="card-meta">
+          {due && <span className={`due-chip ${due.tone}`}>{due.label}</span>}
+          <span className="card-time">{relativeTime(card.updatedAt)}</span>
+        </span>
         <span className="card-meta">
           {atts.length > 0 ? (
             <span className="card-note" title={`${atts.length} image${atts.length > 1 ? 's' : ''}`}>
@@ -487,6 +497,8 @@ function CardEditor(props: {
   const [title, setTitle] = useState(props.card.title)
   const [body, setBody] = useState(props.card.body)
   const [type, setType] = useState<CardType>(props.card.type)
+  const [due, setDue] = useState(dueToInput(props.card.dueAt))
+  const [prio, setPrio] = useState((props.card.priority ?? 0) > 0)
   const [atts, setAtts] = useState<CardAttachment[]>(props.card.attachments ?? [])
   const [dragOver, setDragOver] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -496,6 +508,8 @@ function CardEditor(props: {
     title: title.trim() || props.card.title,
     body,
     type,
+    dueAt: dueFromInput(due),
+    priority: prio ? 1 : 0,
     attachments: atts
   })
 
@@ -552,6 +566,31 @@ function CardEditor(props: {
               {t.emoji} {t.label}
             </button>
           ))}
+        </div>
+        <div className="due-row">
+          <label className="due-label" htmlFor="card-due">
+            Due
+          </label>
+          <input
+            id="card-due"
+            type="date"
+            className="due-input"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+          />
+          {due && (
+            <button className="ghost sm" onClick={() => setDue('')}>
+              clear
+            </button>
+          )}
+          <span className="spacer" />
+          <button
+            className={`prio-toggle ${prio ? 'on' : ''}`}
+            title="Priority cards sort first in the home Up next panel"
+            onClick={() => setPrio((v) => !v)}
+          >
+            {prio ? '★' : '☆'} Priority
+          </button>
         </div>
         <textarea
           className="modal-body"

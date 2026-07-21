@@ -59,6 +59,48 @@ export function summarizeProject(projectId: string, terminals: Record<string, Te
   }
 }
 
+// ---- card due dates ----
+
+export interface DueInfo {
+  label: string
+  tone: 'over' | 'soon' | 'later'
+  /** whole days from today (negative = overdue) */
+  days: number
+}
+
+/** Compact human label + urgency tone for a card's due date; null when it has none. */
+export function dueInfo(dueAt?: number | null): DueInfo | null {
+  if (!dueAt) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueAt)
+  due.setHours(0, 0, 0, 0)
+  const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
+  if (days < 0) return { label: `${-days}d overdue`, tone: 'over', days }
+  if (days === 0) return { label: 'today', tone: 'soon', days }
+  if (days === 1) return { label: 'tomorrow', tone: 'soon', days }
+  if (days < 7) return { label: due.toLocaleDateString(undefined, { weekday: 'short' }), tone: 'later', days }
+  return {
+    label: due.toLocaleDateString(undefined, { day: 'numeric', month: 'numeric' }),
+    tone: 'later',
+    days
+  }
+}
+
+/** ms (local midnight) → value for an <input type="date"> */
+export function dueToInput(ms?: number | null): string {
+  if (!ms) return ''
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** <input type="date"> value → ms at local midnight (null when empty) */
+export function dueFromInput(v: string): number | null {
+  if (!v) return null
+  const [y, m, d] = v.split('-').map(Number)
+  return y && m && d ? new Date(y, m - 1, d).getTime() : null
+}
+
 export function relTime(ts?: number): string {
   if (!ts) return ''
   const d = Date.now() - ts

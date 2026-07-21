@@ -29,6 +29,10 @@
   --viz-4: #9085e9;       /* Fable / Mythos */
   --viz-other: #566072;   /* folded "other" slices */
   --viz-seq: #3987e5;     /* single-hue magnitude bars */
+  /* Home hero "holo" accents (cyan→violet) + the HUD readout face. Used sparingly. */
+  --holo-1: #5ad1ff;
+  --holo-2: #a88bfa;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   font-size: 13px;
 }
@@ -102,6 +106,12 @@ input { font-family: inherit; }
 }
 .chip.on { background: var(--sel); border-color: var(--accent); color: var(--text); }
 .count { margin-left: auto; }
+.newbtn {
+  background: var(--sel); border: 1px solid var(--accent); border-radius: 8px;
+  padding: 6px 12px; font-size: 12px; color: var(--text);
+  transition: background 0.12s ease;
+}
+.newbtn:hover { background: var(--sel-strong); }
 .section {
   font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
   color: var(--muted); margin: 16px 2px 8px;
@@ -110,6 +120,123 @@ input { font-family: inherit; }
   display: grid; gap: 12px;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
+
+/* ---------- Home (mission control) ----------
+   Hero = greeting + HUD telemetry; the one bold element is the corner glow + light sweep,
+   scoped to the dark theme so Total Commander keeps its classic face. */
+.home-hero {
+  position: relative; overflow: hidden;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 20px 15px; margin-bottom: 14px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+html[data-theme="dark"] .home-hero {
+  background:
+    radial-gradient(120% 190% at 86% -50%, rgba(90, 209, 255, 0.09), transparent 55%),
+    radial-gradient(90% 160% at 8% 140%, rgba(168, 139, 250, 0.07), transparent 60%),
+    var(--panel);
+  border-color: var(--border2);
+}
+/* signature: a faint light beam sweeps the hero, like a slow radar pass */
+html[data-theme="dark"] .home-hero::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -120px; width: 110px;
+  background: linear-gradient(90deg, transparent, rgba(90, 209, 255, 0.05) 45%, rgba(168, 139, 250, 0.05) 55%, transparent);
+  animation: hero-sweep 10s ease-in-out infinite; pointer-events: none;
+}
+@keyframes hero-sweep {
+  0% { transform: translateX(0); }
+  65%, 100% { transform: translateX(calc(100vw + 240px)); }
+}
+.hero-top { display: flex; align-items: flex-start; gap: 24px; }
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 9.5px; text-transform: uppercase;
+  letter-spacing: 2.5px; color: var(--muted); margin-bottom: 7px;
+}
+.hero-greeting { font-size: 28px; font-weight: 300; letter-spacing: -0.3px; line-height: 1.15; }
+.hero-name {
+  background: linear-gradient(92deg, var(--holo-1), var(--holo-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  border: none; padding: 0; font: inherit; font-weight: 640; cursor: pointer;
+}
+.hero-name-add {
+  background: transparent; border: 1px dashed var(--border2); border-radius: 999px;
+  margin-left: 12px; padding: 2px 9px; font-size: 11px; color: var(--muted);
+  vertical-align: 6px;
+}
+.hero-name-add:hover { color: var(--text); border-color: var(--accent); }
+.hero-name-input {
+  background: var(--panel2); border: none; border-bottom: 1px solid var(--accent);
+  font: inherit; color: var(--text); width: 180px; outline: none; padding: 0 2px;
+}
+.hero-sub { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.hero-clock-wrap { margin-left: auto; text-align: right; flex: none; }
+.hero-clock {
+  font-family: var(--mono); font-size: 24px; font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: 1px;
+}
+.hero-clock .hero-sec { font-size: 15px; color: var(--muted); letter-spacing: 0; }
+.hero-date {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); margin-top: 4px;
+}
+.hero-stats { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); }
+.hstat { display: inline-flex; align-items: baseline; gap: 7px; }
+.hstat .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hstat .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+.hstat.live .v { color: var(--holo-1); text-shadow: 0 0 12px rgba(90, 209, 255, 0.4); }
+.hstat.warn .v { color: var(--amber); text-shadow: 0 0 12px rgba(229, 192, 123, 0.35); }
+.hstat.alert .v { color: var(--red); text-shadow: 0 0 12px rgba(255, 107, 107, 0.4); }
+.hstat.zero .v { color: var(--muted); }
+
+/* aggregate panels: Up next (all boards) + Agents (live sessions) */
+.home-panels {
+  display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px;
+  align-items: start; margin-bottom: 14px;
+}
+@media (max-width: 1050px) { .home-panels { grid-template-columns: 1fr; } }
+.hpanel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.hpanel-head { display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.hpanel-title { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+.hpanel-count { font-size: 10px; font-weight: 600; color: var(--muted); background: var(--badge-bg); border-radius: 999px; padding: 1px 8px; }
+.hpanel-hint { font-size: 10px; color: var(--dim); }
+.hpanel-body { max-height: 264px; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.hpanel-empty { padding: 18px 14px 20px; font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+.next-row, .agent-row {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: transparent; border: none; border-radius: 8px; padding: 6px 9px;
+}
+.next-row:hover, .agent-row:hover { background: var(--hover); }
+/* card type shows as the same left accent the board uses */
+.next-row { --card-accent: var(--border2); box-shadow: inset 2px 0 0 var(--card-accent); }
+.next-row[data-type="idea"] { --card-accent: var(--blue); }
+.next-row[data-type="feature"] { --card-accent: var(--green); }
+.next-row[data-type="bug"] { --card-accent: var(--red); }
+.next-row[data-type="task"] { --card-accent: var(--muted); }
+.next-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.next-title { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.next-proj { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); }
+.next-state {
+  flex: none; font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--border2); border-radius: 999px; padding: 2px 8px;
+}
+.next-state.now {
+  color: var(--holo-1); border-color: rgba(90, 209, 255, 0.35);
+  background: rgba(90, 209, 255, 0.07);
+}
+.agent-line { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* due-date chip (board card faces + home Up next) — tone escalates as the date nears */
+.due-chip {
+  display: inline-flex; align-items: center; flex: none;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.6px; text-transform: uppercase;
+  border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+  background: var(--chip-bg); color: var(--muted);
+}
+.due-chip.soon { background: rgba(229, 192, 123, 0.16); color: var(--amber); }
+.due-chip.over { background: rgba(255, 107, 107, 0.16); color: var(--red); }
+.prio-star { color: var(--amber); font-size: 11px; flex: none; }
 
 /* ---------- Usage widget (Claude token/cost overview on the dashboard) ---------- */
 .usage {
@@ -504,6 +631,23 @@ input { font-family: inherit; }
 .modal-body { width: 100%; min-height: 140px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; color: var(--text); resize: vertical; outline: none; font-family: inherit; font-size: 13px; margin-bottom: 12px; }
 .modal-body:focus { border-color: var(--accent); }
 
+/* card editor: due date + priority row */
+.due-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.due-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.due-input {
+  background: var(--panel2); border: 1px solid var(--border2); border-radius: 6px;
+  padding: 4px 8px; color: var(--text); font-family: inherit; font-size: 12px; outline: none;
+  color-scheme: dark;
+}
+.due-input:focus { border-color: var(--accent); }
+.prio-toggle {
+  background: transparent; border: 1px solid var(--border2); border-radius: 999px;
+  padding: 3px 11px; font-size: 11px; color: var(--muted);
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.prio-toggle:hover { color: var(--text); border-color: var(--amber); }
+.prio-toggle.on { color: var(--amber); border-color: rgba(229, 192, 123, 0.5); background: rgba(229, 192, 123, 0.1); }
+
 /* card image attachments (editor) */
 .attach { border: 1px solid var(--border2); border-radius: 8px; padding: 10px; margin-bottom: 12px; transition: border-color 0.12s ease, background 0.12s ease; }
 .attach.drag-over { border-color: var(--accent); border-style: dashed; background: rgba(155,180,255,0.06); }
@@ -537,6 +681,13 @@ input { font-family: inherit; }
 .launch-prompt { min-height: 200px; }
 .launch-warn { color: var(--amber); margin: -6px 0 12px; }
 
+/* New Project dialog */
+.np-hint { margin: 6px 2px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-idea { min-height: 150px; }
+.np-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); margin-bottom: 12px; cursor: pointer; }
+.np-check.off { color: var(--muted); cursor: default; }
+.np-check input { accent-color: var(--accent); }
+
 /* board animations */
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes drop-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -546,6 +697,7 @@ input { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .board-card, .board-col, .board-add-col, .card-launch, .modal, .modal-overlay, .drop-line, .sdot { animation: none !important; transition: none !important; }
   .board-card:hover { transform: none; }
+  html[data-theme="dark"] .home-hero::after { animation: none; display: none; }
 }
 
 .tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }

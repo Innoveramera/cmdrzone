@@ -2,13 +2,14 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { create } from 'zustand'
-import type { ProjectNode, AgentProviderInfo, GitStatus } from '@shared/types'
+import type { ProjectNode, AgentProviderInfo, GitStatus, UpNextCard } from '@shared/types'
 import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
 import type { UsageSnapshot } from '@shared/usage'
 import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
 import { statusRank } from '../lib/format'
-import { agentLaunchOpts } from '../lib/agents'
+import { agentLaunchOpts, resolveProvider } from '../lib/agents'
+import { composeNewProjectPrompt } from '../lib/prompt'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
@@ -122,11 +123,17 @@ interface Store {
   theme: ThemeId
   /** whether the Settings dialog is open */
   settingsOpen: boolean
+  /** whether the New Project dialog is open */
+  newProjectOpen: boolean
   /** Claude Code token usage/cost aggregates (dashboard widget); null until scanned */
   usage: UsageSnapshot | null
   usageLoading: boolean
+  /** cards in To Do / In Progress across ALL projects (home "Up next"); null until loaded */
+  upNext: UpNextCard[] | null
 
   refresh: () => Promise<void>
+  /** (re)load the aggregated home "Up next" cards */
+  loadUpNext: () => Promise<void>
   /** (re)scan Claude Code transcripts for the usage widget */
   loadUsage: () => Promise<void>
   /** probe tmux + reattach any background sessions that are still alive */
@@ -152,6 +159,10 @@ interface Store {
   patchTerminal: (id: string, patch: Partial<TerminalTab>) => void
   togglePin: (node: ProjectNode) => Promise<void>
   renameProject: (oldPath: string, newName: string) => Promise<void>
+  /** create <root>/<name>, select it, optionally launch Claude seeded with the idea; error string or null */
+  createProject: (name: string, description: string, launchAgent: boolean) => Promise<string | null>
+  openNewProject: () => void
+  closeNewProject: () => void
   /** create a git worktree + launch the project's agent in it; resolves an error string or null */
   createWorktreeAgent: (projectId: string, name: string) => Promise<string | null>
   /** merge a worktree's branch into the main repo and remove it; error string or null */
@@ -214,8 +225,18 @@ export const useStore = create<Store>((set, get) => ({
   whatsNewOpen: false,
   theme: 'dark',
   settingsOpen: false,
+  newProjectOpen: false,
   usage: null,
   usageLoading: false,
+  upNext: null,
+
+  loadUpNext: async () => {
+    try {
+      set({ upNext: await window.api.board.upNext() })
+    } catch {
+      /* keep whatever we had — the panel degrades to its empty state */
+    }
+  },
 
   loadUsage: async () => {
     if (get().usageLoading) return
@@ -243,6 +264,7 @@ export const useStore = create<Store>((set, get) => ({
     for (const n of flat) {
       if (n.kind === 'project') void get().loadGit(n.path)
     }
+    void get().loadUpNext()
   },
 
   restoreWorkspace: async () => {
@@ -499,6 +521,36 @@ export const useStore = create<Store>((set, get) => ({
     const git = await window.api.projects.git(path)
     set((s) => ({ gitByPath: { ...s.gitByPath, [path]: git } }))
   },
+
+  createProject: async (name, description, launchAgent) => {
+    const res = await window.api.projects.create(name, description)
+    if (!res.ok || !res.path) return res.error ?? 'Could not create the project.'
+    await get().refresh()
+    set({ newProjectOpen: false })
+    get().selectProject(res.path)
+    get().setDetailMode('terminals')
+    if (launchAgent) {
+      const prov = resolveProvider(get().agents)
+      const folderName = res.path.split('/').pop() ?? name
+      if (prov?.id === 'claude-code' && prov.path && description.trim()) {
+        // Seed the very first session with the idea (argv prompt — no shell quoting).
+        get().newTerminal(res.path, {
+          kind: 'agent',
+          providerId: 'claude-code',
+          title: folderName.slice(0, 24),
+          spawn: { command: prov.path, args: [composeNewProjectPrompt(folderName, description)] }
+        })
+      } else {
+        // No idea text or a non-Claude provider — just open the agent in the new folder.
+        get().newTerminal(res.path, agentLaunchOpts(get().agents, undefined))
+      }
+    }
+    return null
+  },
+
+  openNewProject: () => set({ newProjectOpen: true }),
+
+  closeNewProject: () => set({ newProjectOpen: false }),
 
   createWorktreeAgent: async (projectId, name) => {
     const parent = get().findProject(projectId)

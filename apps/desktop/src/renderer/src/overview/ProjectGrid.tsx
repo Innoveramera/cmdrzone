@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import type { ProjectType } from '@shared/types'
 import { useStore } from '../state/store'
 import { ProjectCard } from './ProjectCard'
+import { Home } from './Home'
 import { UsageDashboard } from './UsageDashboard'
 import { statusRank, summarizeProject } from '../lib/format'
 
@@ -51,6 +52,7 @@ export function ProjectGrid() {
 
   return (
     <div className="overview">
+      <Home />
       <UsageDashboard />
       <div className="filterbar">
         <input
@@ -76,6 +78,13 @@ export function ProjectGrid() {
         <span className="count muted">
           {visible.length}/{projects.length}
         </span>
+        <button
+          className="newbtn"
+          onClick={() => useStore.getState().openNewProject()}
+          title="New project (⌘N)"
+        >
+          ✦ New project
+        </button>
       </div>
 
       {pinned.length > 0 && (

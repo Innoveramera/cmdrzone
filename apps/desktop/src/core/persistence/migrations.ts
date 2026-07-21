@@ -123,6 +123,13 @@ const MIGRATIONS: Migration[] = [
       CREATE INDEX idx_board_attach_card ON board_card_attachments(card_id);
       CREATE INDEX idx_board_attach_project ON board_card_attachments(project_path);
     `)
+  },
+  // v4 — due dates + priority flag on board cards (drives the home "Up next" ordering)
+  (db) => {
+    db.exec(`
+      ALTER TABLE board_cards ADD COLUMN due_at INTEGER;
+      ALTER TABLE board_cards ADD COLUMN priority INTEGER NOT NULL DEFAULT 0;
+    `)
   }
 ]
 

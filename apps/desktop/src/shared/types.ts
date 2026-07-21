@@ -109,6 +109,10 @@ export interface BoardCard {
   position: number
   createdAt: number
   updatedAt: number
+  /** due date as ms at LOCAL midnight; null/undefined = no deadline */
+  dueAt?: number | null
+  /** 1 = starred as priority (sorts first in home "Up next"), 0/undefined = normal */
+  priority?: number
   /** image attachments, loaded by getBoard (not persisted via saveCard) */
   attachments?: CardAttachment[]
 }
@@ -127,9 +131,23 @@ export interface BoardData {
   cards: BoardCard[]
 }
 
+/** A board card aggregated across ALL projects for the home dashboard's "Up next" panel. */
+export interface UpNextCard extends BoardCard {
+  /** title of the column the card sits in (e.g. "To Do", "In Progress") */
+  columnTitle: string
+}
+
 export interface RenameResult {
   ok: boolean
   newPath?: string
+  error?: string
+}
+
+/** Result of creating a new project folder under the scan root. */
+export interface CreateProjectResult {
+  ok: boolean
+  /** absolute path of the created project folder */
+  path?: string
   error?: string
 }
 

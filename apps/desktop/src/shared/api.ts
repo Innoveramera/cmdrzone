@@ -17,9 +17,11 @@ import type {
   BoardData,
   BoardCard,
   BoardColumn,
+  UpNextCard,
   CardAttachment,
   AddAttachmentInput,
   RenameResult,
+  CreateProjectResult,
   WorktreeOpResult
 } from './types'
 import type { DurableStatus } from './tmux'
@@ -55,6 +57,8 @@ export interface DesktopApi {
     setPref(path: string, key: string, value: string | null): Promise<void>
     /** rename the project's folder on disk (confirms first); migrates board + prefs */
     rename(path: string, newName: string): Promise<RenameResult>
+    /** create a new project folder under the scan root (git init + seeded CLAUDE.md) */
+    create(name: string, description: string): Promise<CreateProjectResult>
   }
   agents: {
     list(): Promise<AgentProviderInfo[]>
@@ -93,6 +97,8 @@ export interface DesktopApi {
   }
   board: {
     get(path: string): Promise<BoardData>
+    /** cards in To Do / In Progress columns across ALL projects (home "Up next" panel) */
+    upNext(): Promise<UpNextCard[]>
     saveCard(card: BoardCard): Promise<void>
     deleteCard(id: string): Promise<void>
     saveColumn(column: BoardColumn): Promise<void>

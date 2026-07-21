@@ -47,6 +47,24 @@ function nextCardPosition(board: BoardData, columnId: string): number {
   return (positions.length ? Math.max(...positions) : 0) + 1
 }
 
+/** Parse a --due value into ms at LOCAL midnight. Accepts YYYY-MM-DD, "today", "tomorrow". */
+function parseDue(s: string): number {
+  const t = s.trim().toLowerCase()
+  const base = new Date()
+  base.setHours(0, 0, 0, 0)
+  if (t === 'today') return base.getTime()
+  if (t === 'tomorrow') {
+    base.setDate(base.getDate() + 1)
+    return base.getTime()
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t)
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    if (d.getMonth() === Number(m[2]) - 1 && d.getDate() === Number(m[3])) return d.getTime()
+  }
+  throw new Error(`Invalid due date "${s}". Use YYYY-MM-DD, "today" or "tomorrow".`)
+}
+
 // ---- project discovery (mirrors scanAll() in main/index.ts) ----
 
 function getRoots(): string[] {
@@ -148,6 +166,10 @@ export interface AddCardInput {
   title: string
   body?: string
   type?: string | null
+  /** due date: YYYY-MM-DD, "today" or "tomorrow" */
+  due?: string | null
+  /** star the card as priority (sorts first in the home "Up next") */
+  priority?: boolean
 }
 
 export function addCard(input: AddCardInput): BoardCard {
@@ -167,7 +189,9 @@ export function addCard(input: AddCardInput): BoardCard {
     type,
     position: nextCardPosition(board, col.id),
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
+    dueAt: input.due ? parseDue(input.due) : null,
+    priority: input.priority ? 1 : 0
   }
   saveCard(card)
   return card
@@ -177,6 +201,10 @@ export interface UpdateCardPatch {
   title?: string
   body?: string
   type?: string | null
+  /** due date: YYYY-MM-DD, "today", "tomorrow" — or "none"/"" to clear; undefined = untouched */
+  due?: string | null
+  /** true/false to set/clear the priority star; undefined = untouched */
+  priority?: boolean
 }
 
 export function updateCard(id: string, patch: UpdateCardPatch): BoardCard {
@@ -188,11 +216,18 @@ export function updateCard(id: string, patch: UpdateCardPatch): BoardCard {
     if (!t) throw new Error('title cannot be empty')
     title = t
   }
+  let dueAt = card.dueAt ?? null
+  if (patch.due != null) {
+    const d = patch.due.trim().toLowerCase()
+    dueAt = d === '' || d === 'none' ? null : parseDue(patch.due)
+  }
   const updated: BoardCard = {
     ...card,
     title,
     body: patch.body != null ? patch.body : card.body,
     type: patch.type != null && patch.type !== '' ? validateType(patch.type) : card.type,
+    dueAt,
+    priority: patch.priority != null ? (patch.priority ? 1 : 0) : card.priority ?? 0,
     updatedAt: Date.now()
   }
   saveCard(updated)

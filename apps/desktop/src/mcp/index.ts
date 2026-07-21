@@ -55,7 +55,9 @@ server.registerTool(
       column: z.string().describe('Target column name (e.g. "Ideas", "To Do") or column id'),
       title: z.string().describe('Card title'),
       body: z.string().optional().describe('Optional longer description'),
-      type: CARD_TYPE.optional().describe('idea | feature | bug | task (default task)')
+      type: CARD_TYPE.optional().describe('idea | feature | bug | task (default task)'),
+      due: z.string().optional().describe('Due date: YYYY-MM-DD, "today" or "tomorrow"'),
+      priority: z.boolean().optional().describe('Star as priority (sorts first in Up next)')
     }
   },
   async (a) => ok(cmd.addCard(a))
@@ -65,15 +67,18 @@ server.registerTool(
   'update_card',
   {
     title: 'Update card',
-    description: 'Update a card title, body, and/or type by id.',
+    description: 'Update a card title, body, type, due date and/or priority by id.',
     inputSchema: {
       id: z.string().describe('Card id'),
       title: z.string().optional(),
       body: z.string().optional(),
-      type: CARD_TYPE.optional()
+      type: CARD_TYPE.optional(),
+      due: z.string().optional().describe('YYYY-MM-DD, "today", "tomorrow" — or "none" to clear'),
+      priority: z.boolean().optional().describe('true/false to set/clear the priority star')
     }
   },
-  async ({ id, title, body, type }) => ok(cmd.updateCard(id, { title, body, type }))
+  async ({ id, title, body, type, due, priority }) =>
+    ok(cmd.updateCard(id, { title, body, type, due, priority }))
 )
 
 server.registerTool(

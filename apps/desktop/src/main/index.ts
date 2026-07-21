@@ -21,6 +21,7 @@ import { initDatabase, closeDatabase, getDb } from '@core/persistence/database'
 import { scanProjects } from '@core/projects/scanner'
 import { gitStatus } from '@core/projects/git'
 import { renameProjectFolder } from '@core/projects/rename'
+import { createProject } from '@core/projects/create'
 import { attachWorktrees, addWorktree, removeWorktree, mergeWorktree } from '@core/projects/worktrees'
 import { detectProviders } from '@core/agents/providers'
 import { createHookServer, buildHooksSettings } from '@core/agents/hook-server'
@@ -29,6 +30,7 @@ import { scanUsage } from '@core/usage/transcripts'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
 import {
   getBoard,
+  getUpNext as boardGetUpNext,
   saveCard as boardSaveCard,
   deleteCard as boardDeleteCard,
   saveColumn as boardSaveColumn,
@@ -389,6 +391,12 @@ function registerIpc(): void {
     return renameProjectFolder(path, name)
   })
 
+  ipcMain.handle(
+    IPC.projectsCreate,
+    (_e, { name, description }: { name: string; description: string }) =>
+      createProject(getRoots()[0]!, name, description, shellEnv)
+  )
+
   ipcMain.handle(IPC.agentsList, () => detectProviders())
 
   // Git worktrees (parallel agents). Destructive ops confirm in main, like projectsRename.
@@ -444,6 +452,7 @@ function registerIpc(): void {
   )
 
   ipcMain.handle(IPC.boardGet, (_e, p: string) => getBoard(p))
+  ipcMain.handle(IPC.boardUpNext, () => boardGetUpNext())
   ipcMain.handle(IPC.boardSaveCard, (_e, card: BoardCard) => boardSaveCard(card))
   ipcMain.handle(IPC.boardDeleteCard, (_e, id: string) => boardDeleteCard(id))
   ipcMain.handle(IPC.boardSaveColumn, (_e, col: BoardColumn) => boardSaveColumn(col))

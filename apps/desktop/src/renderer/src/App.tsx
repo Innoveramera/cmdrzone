@@ -11,6 +11,7 @@ import { CommandPalette } from './global/CommandPalette'
 import { UpdateFooter } from './global/UpdateFooter'
 import { WhatsNew } from './global/WhatsNew'
 import { Settings } from './global/Settings'
+import { NewProject } from './global/NewProject'
 import { FunctionKeyBar } from './global/FunctionKeyBar'
 import { ProjectTree } from './tree/ProjectTree'
 import { ProjectGrid } from './overview/ProjectGrid'
@@ -64,6 +65,9 @@ export function App() {
       if (e.metaKey && e.key === 'k') {
         e.preventDefault()
         useStore.getState().togglePalette()
+      } else if (e.metaKey && e.key === 'n' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        useStore.getState().openNewProject()
       } else if (e.metaKey && e.key === '0') {
         e.preventDefault()
         useStore.getState().clearSelection()
@@ -160,6 +164,7 @@ export function App() {
       <CommandPalette />
       <WhatsNew />
       <Settings />
+      <NewProject />
     </div>
   )
 }

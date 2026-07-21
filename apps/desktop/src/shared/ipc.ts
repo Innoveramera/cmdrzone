@@ -11,6 +11,8 @@ export const IPC = {
   projectsGit: 'projects:git',
   projectSetPref: 'projects:setPref',
   projectsRename: 'projects:rename',
+  /** create <root>/<name> + git init + CLAUDE.md seeded with the user's idea */
+  projectsCreate: 'projects:create',
   agentsList: 'agents:list',
   // git worktrees (parallel agents)
   worktreeAdd: 'worktrees:add',
@@ -24,6 +26,8 @@ export const IPC = {
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
   boardGet: 'board:get',
+  /** cards in To Do / In Progress columns across ALL projects (home "Up next" panel) */
+  boardUpNext: 'board:upNext',
   boardSaveCard: 'board:saveCard',
   boardDeleteCard: 'board:deleteCard',
   boardSaveColumn: 'board:saveColumn',

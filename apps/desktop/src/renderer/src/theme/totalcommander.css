@@ -39,8 +39,22 @@ html[data-theme="totalcommander"] {
   --viz-4: #4a3aa7;
   --viz-other: #5a5a5a;
   --viz-seq: #2a78d6;
+  /* Home hero accents — the dark theme's pale holo cyan/violet vanishes on silver;
+     go period-correct navy→purple instead. */
+  --holo-1: #000080;
+  --holo-2: #6a2a9a;
 
   font-family: "MS Sans Serif", "Tahoma", "Geneva", Verdana, "Segoe UI", sans-serif;
+}
+
+/* Home hero on silver: no neon — drop the glow shadows, keep the plain readout. */
+html[data-theme="totalcommander"] .hstat.live .v,
+html[data-theme="totalcommander"] .hstat.warn .v,
+html[data-theme="totalcommander"] .hstat.alert .v { text-shadow: none; }
+/* native date picker should render light on the silver chrome */
+html[data-theme="totalcommander"] .due-input { color-scheme: light; }
+html[data-theme="totalcommander"] .next-state.now {
+  color: var(--accent); border-color: var(--accent); background: transparent;
 }
 
 /* ---------- 2. Chrome ---------- */

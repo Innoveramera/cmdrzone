@@ -42,7 +42,8 @@ const api: DesktopApi = {
     scan: () => ipcRenderer.invoke(IPC.projectsScan),
     git: (path) => ipcRenderer.invoke(IPC.projectsGit, path),
     setPref: (path, key, value) => ipcRenderer.invoke(IPC.projectSetPref, { path, key, value }),
-    rename: (path, newName) => ipcRenderer.invoke(IPC.projectsRename, { path, newName })
+    rename: (path, newName) => ipcRenderer.invoke(IPC.projectsRename, { path, newName }),
+    create: (name, description) => ipcRenderer.invoke(IPC.projectsCreate, { name, description })
   },
   agents: {
     list: () => ipcRenderer.invoke(IPC.agentsList),
@@ -80,6 +81,7 @@ const api: DesktopApi = {
   },
   board: {
     get: (path) => ipcRenderer.invoke(IPC.boardGet, path),
+    upNext: () => ipcRenderer.invoke(IPC.boardUpNext),
     saveCard: (card) => ipcRenderer.invoke(IPC.boardSaveCard, card),
     deleteCard: (id) => ipcRenderer.invoke(IPC.boardDeleteCard, id),
     saveColumn: (column) => ipcRenderer.invoke(IPC.boardSaveColumn, column),

@@ -109,9 +109,9 @@ command center. Add `--dev` to target the `pnpm dev` ("CmdrZone Dev") store inst
 ```bash
 # Prereq: the bundle must exist — run `pnpm build` once if apps/desktop/out/cli.cjs is missing.
 node bin/cmdrzone.mjs board show --project secondbrain
-node bin/cmdrzone.mjs card add  --project secondbrain --column Ideas --title "…" --type feature --body "…"
+node bin/cmdrzone.mjs card add  --project secondbrain --column Ideas --title "…" --type feature --body "…" [--due YYYY-MM-DD|today|tomorrow] [--prio]
 node bin/cmdrzone.mjs card move --id <cardId> --column "In Progress"
-node bin/cmdrzone.mjs card update --id <cardId> --title "…" --type bug
+node bin/cmdrzone.mjs card update --id <cardId> --title "…" --type bug [--due <date|none>] [--prio|--no-prio]
 node bin/cmdrzone.mjs --help     # full surface: card add|update|move|rm, column add|rename|rm, --json
 ```
 

@@ -4,14 +4,14 @@
 // Trello-style board store, keyed by stable project path (survives rescans).
 import fs from 'node:fs'
 import { getDb } from '../persistence/database'
-import type { BoardData, BoardCard, BoardColumn, CardAttachment } from '@shared/types'
+import type { BoardData, BoardCard, BoardColumn, CardAttachment, UpNextCard } from '@shared/types'
 
 const DEFAULT_COLUMNS = ['Ideas', 'To Do', 'In Progress', 'Done']
 
 const COLS_SQL =
   'SELECT id, project_path AS projectPath, title, position, created_at AS createdAt FROM board_columns WHERE project_path = ? ORDER BY position'
 const CARDS_SQL =
-  'SELECT id, project_path AS projectPath, column_id AS columnId, title, body, type, position, created_at AS createdAt, updated_at AS updatedAt FROM board_cards WHERE project_path = ? ORDER BY position'
+  'SELECT id, project_path AS projectPath, column_id AS columnId, title, body, type, position, created_at AS createdAt, updated_at AS updatedAt, due_at AS dueAt, priority FROM board_cards WHERE project_path = ? ORDER BY position'
 // On-disk path is kept private to main/core; the renderer only ever sees the czfile:// url.
 const ATTACH_COLS =
   'id, card_id AS cardId, project_path AS projectPath, name, mime, path, position, created_at AS createdAt'
@@ -48,10 +48,41 @@ export function getBoard(projectPath: string): BoardData {
   return { columns, cards }
 }
 
+// Column titles that count as "queued work" for the home dashboard. Matched case-insensitively
+// so renamed variants (todo / Doing / Now) still land on the dashboard.
+const UP_NEXT_TITLES = ['to do', 'todo', 'in progress', 'doing', 'next', 'now']
+const IN_PROGRESS_TITLES = ['in progress', 'doing', 'now']
+
+/**
+ * Cards from To Do / In Progress columns across ALL projects — the home "Up next" panel.
+ * In-progress cards first, then to-dos; within each group: deadlines first (soonest due at
+ * the top), then starred priority cards, then column position (top of column = next).
+ */
+export function getUpNext(limit = 40): UpNextCard[] {
+  const all = UP_NEXT_TITLES.map(() => '?').join(',')
+  const doing = IN_PROGRESS_TITLES.map(() => '?').join(',')
+  const rows = getDb()
+    .prepare(
+      `SELECT c.id, c.project_path AS projectPath, c.column_id AS columnId, c.title, c.body,
+              c.type, c.position, c.created_at AS createdAt, c.updated_at AS updatedAt,
+              c.due_at AS dueAt, c.priority,
+              col.title AS columnTitle
+       FROM board_cards c JOIN board_columns col ON col.id = c.column_id
+       WHERE LOWER(col.title) IN (${all})
+       ORDER BY CASE WHEN LOWER(col.title) IN (${doing}) THEN 0 ELSE 1 END,
+                (c.due_at IS NULL), c.due_at,
+                c.priority DESC,
+                c.position
+       LIMIT ?`
+    )
+    .all(...UP_NEXT_TITLES, ...IN_PROGRESS_TITLES, limit) as UpNextCard[]
+  return rows.map((c) => ({ ...c, body: c.body ?? '' }))
+}
+
 export function getCard(id: string): BoardCard | undefined {
   const row = getDb()
     .prepare(
-      'SELECT id, project_path AS projectPath, column_id AS columnId, title, body, type, position, created_at AS createdAt, updated_at AS updatedAt FROM board_cards WHERE id = ?'
+      'SELECT id, project_path AS projectPath, column_id AS columnId, title, body, type, position, created_at AS createdAt, updated_at AS updatedAt, due_at AS dueAt, priority FROM board_cards WHERE id = ?'
     )
     .get(id) as BoardCard | undefined
   return row ? { ...row, body: row.body ?? '' } : undefined
@@ -62,11 +93,12 @@ export function saveCard(card: BoardCard): void {
   // better-sqlite3 would reject as an unknown named parameter.
   getDb()
     .prepare(
-      `INSERT INTO board_cards (id, project_path, column_id, title, body, type, position, created_at, updated_at)
-       VALUES (@id, @projectPath, @columnId, @title, @body, @type, @position, @createdAt, @updatedAt)
+      `INSERT INTO board_cards (id, project_path, column_id, title, body, type, position, created_at, updated_at, due_at, priority)
+       VALUES (@id, @projectPath, @columnId, @title, @body, @type, @position, @createdAt, @updatedAt, @dueAt, @priority)
        ON CONFLICT(id) DO UPDATE SET
          column_id = excluded.column_id, title = excluded.title, body = excluded.body,
-         type = excluded.type, position = excluded.position, updated_at = excluded.updated_at`
+         type = excluded.type, position = excluded.position, updated_at = excluded.updated_at,
+         due_at = excluded.due_at, priority = excluded.priority`
     )
     .run({
       id: card.id,
@@ -77,7 +109,9 @@ export function saveCard(card: BoardCard): void {
       type: card.type,
       position: card.position,
       createdAt: card.createdAt,
-      updatedAt: card.updatedAt
+      updatedAt: card.updatedAt,
+      dueAt: card.dueAt ?? null,
+      priority: card.priority ?? 0
     })
 }
 

@@ -236,6 +236,13 @@ export function ProjectTree() {
           <span className="root-label" title={rootPath}>
             {rootPath.split('/').pop() || 'Projects'}
           </span>
+          <button
+            className="mini"
+            onClick={() => useStore.getState().openNewProject()}
+            title="New project (⌘N)"
+          >
+            ＋ new
+          </button>
           <button className="mini" onClick={() => void useStore.getState().pickRoot()} title="Change folder">
             change
           </button>

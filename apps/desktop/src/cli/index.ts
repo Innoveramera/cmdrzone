@@ -15,7 +15,7 @@ interface Parsed {
   flags: Record<string, string | boolean>
 }
 
-const BOOL_FLAGS = new Set(['dev', 'json', 'help'])
+const BOOL_FLAGS = new Set(['dev', 'json', 'help', 'prio', 'no-prio'])
 
 function parseArgs(argv: string[]): Parsed {
   const positionals: string[] = []
@@ -62,7 +62,9 @@ Usage:
   cmdrzone projects list
   cmdrzone board show     --project <name|path>
   cmdrzone card add        --project <p> --column <name|id> --title <t> [--body <b>] [--type idea|feature|bug|task]
+                           [--due YYYY-MM-DD|today|tomorrow] [--prio]
   cmdrzone card update     --id <cardId> [--title <t>] [--body <b>] [--type <t>]
+                           [--due <date|none>] [--prio|--no-prio]
   cmdrzone card move       --id <cardId> [--column <name|id>] [--position <n>]
   cmdrzone card rm         --id <cardId>
   cmdrzone column add      --project <p> --title <t>
@@ -83,8 +85,14 @@ function emit(json: boolean, human: string, data: unknown): void {
 function colLine(c: BoardColumn): string {
   return `  [${c.id}] ${c.title}`
 }
+function localDay(ms: number): string {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 function cardLine(c: BoardCard): string {
-  return `    • (${c.type}) ${c.title}  [${c.id}]`
+  const star = (c.priority ?? 0) > 0 ? ' ★' : ''
+  const due = c.dueAt ? `  due ${localDay(c.dueAt)}` : ''
+  return `    • (${c.type})${star} ${c.title}${due}  [${c.id}]`
 }
 
 function run(parsed: Parsed): void {
@@ -136,7 +144,9 @@ function run(parsed: Parsed): void {
         column: requireFlag(flags, 'column'),
         title: requireFlag(flags, 'title'),
         body: str(flags, 'body'),
-        type: str(flags, 'type')
+        type: str(flags, 'type'),
+        due: str(flags, 'due'),
+        priority: !!flags.prio
       })
       return emit(json, `added ${card.id} (${card.type}) "${card.title}"`, card)
     }
@@ -144,7 +154,9 @@ function run(parsed: Parsed): void {
       const card = cmd.updateCard(requireFlag(flags, 'id'), {
         title: str(flags, 'title'),
         body: str(flags, 'body'),
-        type: str(flags, 'type')
+        type: str(flags, 'type'),
+        due: str(flags, 'due'),
+        priority: flags.prio ? true : flags['no-prio'] ? false : undefined
       })
       return emit(json, `updated ${card.id} "${card.title}"`, card)
     }
