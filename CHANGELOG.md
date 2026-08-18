@@ -8,6 +8,22 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.5.0] - 2026-08-18
+
+### Added
+
+- **AGENTS.md is now the canonical instructions file for new projects.** The New Project
+  dialog seeds your idea into `AGENTS.md` — the cross-agent standard read directly by
+  Codex CLI, Gemini CLI and opencode — plus a one-line `CLAUDE.md` pointer (`@AGENTS.md`)
+  so Claude Code picks up the same instructions. One source of truth, every agent reads it.
+
+### Changed
+
+- Project cards and the Project panel now show the instructions file that actually exists:
+  the badge says AGENTS.md or CLAUDE.md accordingly, and the docs preview gets an AGENTS.md
+  tab. This also fixes AGENTS.md-only projects, which used to show a "CLAUDE.md" badge and
+  an empty preview.
+
 ## [0.4.0] - 2026-07-21
 
 ### Added
