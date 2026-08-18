@@ -32,11 +32,11 @@ export function composePrompt(card: BoardCard): string {
 }
 
 // First prompt for a freshly created project: the user's idea plus enough framing for
-// Claude to bootstrap sensibly (the same idea is also persisted in the new CLAUDE.md).
+// the agent to bootstrap sensibly (the same idea is also persisted in the new AGENTS.md).
 export function composeNewProjectPrompt(name: string, description: string): string {
   return [
-    `This is a brand-new, empty project called "${name}" — a fresh folder with git initialized and a CLAUDE.md holding the idea below. Here's what I want to build:`,
+    `This is a brand-new, empty project called "${name}" — a fresh folder with git initialized and an AGENTS.md holding the idea below (CLAUDE.md imports it). Here's what I want to build:`,
     description.trim(),
-    'Help me get it off the ground: propose a fitting tech stack and project structure (ask me first if anything important is unclear), scaffold the initial skeleton with dev/build tooling and a README, and update CLAUDE.md with the commands and architecture. Then suggest the first iteration.'
+    'Help me get it off the ground: propose a fitting tech stack and project structure (ask me first if anything important is unclear), scaffold the initial skeleton with dev/build tooling and a README, and update AGENTS.md with the commands and architecture. Then suggest the first iteration.'
   ].join('\n\n')
 }

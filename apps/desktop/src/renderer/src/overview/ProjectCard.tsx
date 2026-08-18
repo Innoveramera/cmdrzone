@@ -65,7 +65,9 @@ export function ProjectCard({ node }: { node: ProjectNode }) {
       <div className="card-row">
         <span className="badge">{typeLabel(node.type)}</span>
         {node.kind === 'docs' && <span className="badge">docs</span>}
-        {node.hasClaudeMd && <span className="badge soft">CLAUDE.md</span>}
+        {(node.hasAgentsMd || node.hasClaudeMd) && (
+          <span className="badge soft">{node.hasAgentsMd ? 'AGENTS.md' : 'CLAUDE.md'}</span>
+        )}
       </div>
       <div className="card-git">
         {git?.isRepo ? (

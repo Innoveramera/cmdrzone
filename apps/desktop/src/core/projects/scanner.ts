@@ -4,7 +4,7 @@
 // Project discovery for ~/Development/. Handles the three real folder shapes:
 //   - plain project: root has a marker (.git / package.json / pubspec.yaml)
 //   - group: no root marker, but >=1 immediate child has one (monorepo-ish folders)
-//   - docs folder: only CLAUDE.md/TASKS.md (e.g. a portfolio dashboard)
+//   - docs folder: only AGENTS.md/CLAUDE.md/TASKS.md (e.g. a portfolio dashboard)
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -92,7 +92,8 @@ export function makeNode(dir: string, name: string, kind: ProjectKind, m: Marker
     color: colorForName(name),
     isPinned: false,
     isHidden: false,
-    hasClaudeMd: m.claudeMd || m.agentsMd,
+    hasClaudeMd: m.claudeMd,
+    hasAgentsMd: m.agentsMd,
     hasTasksMd: m.tasksMd,
     hasReadme: m.readme,
     hasEnv: m.env,

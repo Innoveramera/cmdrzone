@@ -7,7 +7,9 @@ import { useStore } from '../state/store'
 
 const DOCS: { file: string; flag: (p: ProjectNode) => boolean; label: string }[] = [
   { file: 'README.md', flag: (p) => p.hasReadme, label: 'README' },
-  { file: 'CLAUDE.md', flag: (p) => p.hasClaudeMd, label: 'CLAUDE.md' },
+  { file: 'AGENTS.md', flag: (p) => p.hasAgentsMd, label: 'AGENTS.md' },
+  // hidden when AGENTS.md exists: in that setup CLAUDE.md is just an @AGENTS.md pointer
+  { file: 'CLAUDE.md', flag: (p) => p.hasClaudeMd && !p.hasAgentsMd, label: 'CLAUDE.md' },
   { file: 'TASKS.md', flag: (p) => p.hasTasksMd, label: 'TASKS.md' }
 ]
 

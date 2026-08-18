@@ -38,6 +38,7 @@ export interface ProjectNode {
   branch?: string
   lastOpenedAt?: number
   hasClaudeMd: boolean
+  hasAgentsMd: boolean
   hasTasksMd: boolean
   hasReadme: boolean
   hasEnv: boolean

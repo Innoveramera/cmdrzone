@@ -11,7 +11,7 @@ export const IPC = {
   projectsGit: 'projects:git',
   projectSetPref: 'projects:setPref',
   projectsRename: 'projects:rename',
-  /** create <root>/<name> + git init + CLAUDE.md seeded with the user's idea */
+  /** create <root>/<name> + git init + AGENTS.md seeded with the user's idea (+ CLAUDE.md pointer) */
   projectsCreate: 'projects:create',
   agentsList: 'agents:list',
   // git worktrees (parallel agents)

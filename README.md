@@ -38,7 +38,7 @@ drive them all.
   preview first), the session opens in the Terminals tab, and the card slides to "In Progress".
 - **Agent CLI / MCP** — a `cmdrzone` CLI and an MCP server let AI agents create and manage board
   cards themselves (no GUI), straight against the SQLite store. See [Agent CLI / MCP](#agent-cli--mcp--let-agents-manage-the-board).
-- **Project info** — README / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
+- **Project info** — README / AGENTS.md / CLAUDE.md / TASKS.md preview, `package.json` scripts as one-click run
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity
   rail, and native notifications when an agent needs you or finishes.

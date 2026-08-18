@@ -615,6 +615,7 @@ app.whenReady().then(async () => {
       kind: n.kind,
       type: n.type,
       claudeMd: n.hasClaudeMd,
+      agentsMd: n.hasAgentsMd,
       tasksMd: n.hasTasksMd,
       env: n.hasEnv,
       scripts: n.scripts ? Object.keys(n.scripts).length : 0,

@@ -57,7 +57,7 @@ export interface DesktopApi {
     setPref(path: string, key: string, value: string | null): Promise<void>
     /** rename the project's folder on disk (confirms first); migrates board + prefs */
     rename(path: string, newName: string): Promise<RenameResult>
-    /** create a new project folder under the scan root (git init + seeded CLAUDE.md) */
+    /** create a new project folder under the scan root (git init + seeded AGENTS.md) */
     create(name: string, description: string): Promise<CreateProjectResult>
   }
   agents: {

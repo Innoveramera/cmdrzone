@@ -7,7 +7,7 @@ import { resolveProvider } from '../lib/agents'
 import { sanitizeProjectName } from '@shared/project-name'
 
 // "New project" wizard (⌘N): name + "what do you want to build?" → creates <root>/<name>
-// (git init, CLAUDE.md seeded with the idea) and optionally launches Claude Code with the
+// (git init, AGENTS.md seeded with the idea) and optionally launches Claude Code with the
 // idea as its very first prompt, so a brand-new project starts with context instead of blank.
 export function NewProject() {
   const open = useStore((s) => s.newProjectOpen)
@@ -68,7 +68,7 @@ export function NewProject() {
           onChange={(e) => setName(e.target.value)}
         />
         <div className="np-hint muted small">
-          {folder ? `${rootPath}/${folder}` : 'Creates a folder in your projects root, with git + CLAUDE.md.'}
+          {folder ? `${rootPath}/${folder}` : 'Creates a folder in your projects root, with git + AGENTS.md.'}
         </div>
         <textarea
           className="modal-body np-idea"
@@ -76,7 +76,7 @@ export function NewProject() {
           onChange={(e) => setIdea(e.target.value)}
           placeholder={
             'What do you want to build?\n\nA couple of sentences is enough — goal, target users, stack preferences. ' +
-            'This seeds the project’s CLAUDE.md and becomes the first prompt of the Claude session.'
+            'This seeds the project’s AGENTS.md and becomes the first prompt of the Claude session.'
           }
         />
         <label className={`np-check ${agentReady ? '' : 'off'}`}>
