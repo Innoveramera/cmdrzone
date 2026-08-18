@@ -1,4 +1,4 @@
-# CLAUDE.md — working in this repo
+# AGENTS.md — working in this repo
 
 CmdrZone is a macOS-first Electron + TypeScript desktop app (a command center for many
 projects + AI coding agents). pnpm workspace. See `README.md` and `CONTRIBUTING.md` for the
@@ -104,12 +104,12 @@ you go. The CLI runs under `ELECTRON_RUN_AS_NODE` (no app needs to be running).
 
 **Default to the installed *CmdrZone* app's board (no flag)** so tickets land in the user's daily
 command center. Add `--dev` to target the `pnpm dev` ("CmdrZone Dev") store instead. This project is
-`--project secondbrain`. Columns: **Ideas / To Do / In Progress / Done**; types: `idea|feature|bug|task`.
+`--project cmdrzone`. Columns: **Ideas / To Do / In Progress / Done**; types: `idea|feature|bug|task`.
 
 ```bash
 # Prereq: the bundle must exist — run `pnpm build` once if apps/desktop/out/cli.cjs is missing.
-node bin/cmdrzone.mjs board show --project secondbrain
-node bin/cmdrzone.mjs card add  --project secondbrain --column Ideas --title "…" --type feature --body "…" [--due YYYY-MM-DD|today|tomorrow] [--prio]
+node bin/cmdrzone.mjs board show --project cmdrzone
+node bin/cmdrzone.mjs card add  --project cmdrzone --column Ideas --title "…" --type feature --body "…" [--due YYYY-MM-DD|today|tomorrow] [--prio]
 node bin/cmdrzone.mjs card move --id <cardId> --column "In Progress"
 node bin/cmdrzone.mjs card update --id <cardId> --title "…" --type bug [--due <date|none>] [--prio|--no-prio]
 node bin/cmdrzone.mjs --help     # full surface: card add|update|move|rm, column add|rename|rm, --json
