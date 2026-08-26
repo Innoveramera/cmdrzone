@@ -6,7 +6,7 @@
 // This module owns the bits CSS can't reach: the xterm + Monaco theming, the
 // catalog the Settings picker renders, and applying the data-theme attribute.
 
-export type ThemeId = 'dark' | 'totalcommander'
+export type ThemeId = 'dark' | 'mono' | 'totalcommander'
 
 /** Minimal xterm theme — xterm merges this over its defaults, so a few keys suffice. */
 interface XtermTheme {
@@ -39,6 +39,18 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
     },
     monaco: 'vs-dark'
   },
+  mono: {
+    id: 'mono',
+    label: 'Mono',
+    description: 'Pure grayscale — true-black panels, light type, hairline borders, monochrome glyphs.',
+    xterm: {
+      background: '#000000',
+      foreground: '#e6e6e6',
+      cursor: '#ffffff',
+      selectionBackground: '#2e2e2e'
+    },
+    monaco: 'vs-dark'
+  },
   totalcommander: {
     id: 'totalcommander',
     label: 'Total Commander',
@@ -54,10 +66,10 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
   }
 }
 
-export const THEME_LIST: ThemeDef[] = [THEMES.dark, THEMES.totalcommander]
+export const THEME_LIST: ThemeDef[] = [THEMES.dark, THEMES.mono, THEMES.totalcommander]
 
 export function isThemeId(v: string): v is ThemeId {
-  return v === 'dark' || v === 'totalcommander'
+  return v === 'dark' || v === 'mono' || v === 'totalcommander'
 }
 
 /** Reflect the active theme onto <html data-theme="…"> so the CSS overrides take effect. */
