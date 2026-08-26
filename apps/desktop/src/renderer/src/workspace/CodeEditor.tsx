@@ -23,6 +23,54 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
   }
 }
 
+// The Zone theme (themes.ts) goes grayscale all the way down: syntax highlighting
+// becomes a gray ramp where brightness + weight carry what hue used to. Registered
+// once at module load; THEMES.zone.monaco names it.
+monaco.editor.defineTheme('zone', {
+  base: 'vs-dark',
+  inherit: false,
+  rules: [
+    { token: '', foreground: 'd6d6d6' },
+    { token: 'comment', foreground: '6a6a6a', fontStyle: 'italic' },
+    { token: 'keyword', foreground: 'ffffff', fontStyle: 'bold' },
+    { token: 'string', foreground: 'b0b0b0' },
+    { token: 'string.escape', foreground: 'd0d0d0' },
+    { token: 'number', foreground: 'e8e8e8' },
+    { token: 'regexp', foreground: 'c0c0c0' },
+    { token: 'type', foreground: 'f0f0f0' },
+    { token: 'type.identifier', foreground: 'f0f0f0' },
+    { token: 'identifier', foreground: 'd6d6d6' },
+    { token: 'delimiter', foreground: '8e8e8e' },
+    { token: 'tag', foreground: 'f0f0f0' },
+    { token: 'attribute.name', foreground: 'b8b8b8' },
+    { token: 'attribute.value', foreground: 'b0b0b0' },
+    { token: 'metatag', foreground: '8e8e8e' },
+    { token: 'key', foreground: 'e0e0e0' },
+    { token: 'string.key.json', foreground: 'e0e0e0' },
+    { token: 'string.value.json', foreground: 'b0b0b0' },
+    { token: 'variable', foreground: 'd6d6d6' },
+    { token: 'constant', foreground: 'e8e8e8' },
+    { token: 'namespace', foreground: 'c8c8c8' },
+    { token: 'annotation', foreground: '9a9a9a' }
+  ],
+  colors: {
+    'editor.background': '#131313',
+    'editor.foreground': '#d6d6d6',
+    'editor.lineHighlightBackground': '#1a1a1a',
+    'editor.selectionBackground': '#383838',
+    'editor.inactiveSelectionBackground': '#2a2a2a',
+    'editorCursor.foreground': '#ffffff',
+    'editorLineNumber.foreground': '#4a4a4a',
+    'editorLineNumber.activeForeground': '#8c8c8c',
+    'editorWidget.background': '#171717',
+    'editorWidget.border': '#343434',
+    'editorIndentGuide.background': '#242424',
+    'editorGutter.background': '#131313',
+    'minimap.background': '#111111',
+    'editorBracketMatch.border': '#8c8c8c'
+  }
+})
+
 function languageFromPath(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase() ?? ''
   const map: Record<string, string> = {

@@ -1,0 +1,48 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Copyright (C) 2026 Fredrik Hammarström */
+
+/* ============================================================================
+   Zone — Mono's sibling, named for Ansel Adams' Zone System (the eleven-step
+   gray scale from Zone 0 black to Zone X white). Where Mono is stark black &
+   white, Zone is the full gray ramp: layered charcoal surfaces with visible
+   depth steps — and it goes all the way down: the terminal's ANSI palette and
+   the editor's syntax colors are also remapped onto grays (see themes.ts and
+   CodeEditor.tsx). Nothing renders in color.
+
+   Only the palette lives here. The typography and de-tinting layers are shared
+   with Mono in monochrome.css, scoped :is(mono, zone).
+   ========================================================================== */
+
+html[data-theme="zone"] {
+  --bg: #0f0f0f;      /* Zone I  — the void between panels */
+  --panel: #171717;   /* Zone II — raised surfaces */
+  --panel2: #131313;  /* between the two — wells (editor, info) */
+  --border: #262626;
+  --border2: #343434;
+  --text: #dcdcdc;
+  --muted: #8c8c8c;
+  --accent: #f2f2f2;  /* near-white — Zone IX, not Mono's pure X */
+  /* Semantic colors as brightness steps, same ordering as Mono: error loudest
+     (pure white), success just below, links light gray, warnings mid gray. */
+  --blue: #c4c4c4;
+  --amber: #9e9e9e;
+  --green: #d6d6d6;
+  --red: #ffffff;
+  --hover: #1d1d1d;
+  --elev: #212121;
+  --sel: #272727;
+  --sel-strong: #313131;
+  --chip-bg: #1f1f1f;
+  --badge-bg: #1b1b1b;
+  --dim: #4a4a4a;
+  /* Chart colors — the ramp itself; slices differ by lightness only. */
+  --viz-1: #efefef;
+  --viz-2: #b3b3b3;
+  --viz-3: #7a7a7a;
+  --viz-4: #4b4b4b;
+  --viz-other: #2e2e2e;
+  --viz-seq: #d4d4d4;
+  /* Home hero accents — a white→gray sweep instead of holo colors. */
+  --holo-1: #f2f2f2;
+  --holo-2: #8a8a8a;
+}
