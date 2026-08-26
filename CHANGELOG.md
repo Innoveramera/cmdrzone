@@ -8,6 +8,15 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.7.0] - 2026-08-26
+
+### Added
+
+- **New theme: Zone.** Mono's sibling, named for Ansel Adams' Zone System — layered charcoal
+  surfaces instead of true black, and grayscale all the way down: the terminal's 16 ANSI colors
+  and the code editor's syntax highlighting are remapped onto a gray ramp, so brightness carries
+  what hue used to. Nothing renders in color. Pick it in ⚙ Settings → Theme.
+
 ## [0.6.0] - 2026-08-26
 
 ### Added
