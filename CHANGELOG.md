@@ -8,6 +8,15 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.6.0] - 2026-08-26
+
+### Added
+
+- **New theme: Mono.** A clean, minimal grayscale skin — true-black panels, light typography,
+  hairline borders, and no color anywhere: status and accents are carried by brightness alone.
+  Color emoji and per-project dots flatten to monochrome, while the terminal and code editor
+  keep their colors so content stays readable. Pick it in ⚙ Settings → Theme.
+
 ## [0.5.0] - 2026-08-18
 
 ### Added
