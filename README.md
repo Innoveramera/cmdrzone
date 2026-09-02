@@ -42,7 +42,8 @@ drive them all.
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity
   rail, and native notifications when an agent needs you or finishes.
-- **Keyboard-first** — `⌘K` fuzzy switcher, `⌘0` dashboard, `⌘1–9` pinned projects, `⌘T` new
+- **Keyboard-first** — `⌘K` fuzzy switcher, `⌃Tab` / `⌃⇧Tab` cycle through the projects with an
+  agent running (also `⌘⌥→` / `⌘⌥←`), `⌘0` dashboard, `⌘1–9` pinned projects, `⌘T` new
   terminal, `⌘D` / `⌘⇧D` split pane.
 - **Split terminals** — split any tab into panes (row/col); each pane is its own live PTY.
 - **Model-agnostic, Claude-first** — agents are just launch recipes; add your own.

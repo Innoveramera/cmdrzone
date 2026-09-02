@@ -84,6 +84,8 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
         e.preventDefault()
         return false
       }
+      // ⌃Tab / ⌃⇧Tab belong to the app (cycle active projects) — don't let xterm turn them into \t.
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'Tab') return false
       if (!e.metaKey) return true
       if (e.code === 'KeyC' && term.hasSelection()) {
         window.api.clipboard.write(term.getSelection())

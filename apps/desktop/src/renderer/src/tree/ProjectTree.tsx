@@ -155,15 +155,17 @@ function Section({
   label,
   count,
   open,
-  onToggle
+  onToggle,
+  title
 }: {
   label: string
   count: number
   open: boolean
   onToggle: () => void
+  title?: string
 }) {
   return (
-    <div className="tree-section" onClick={onToggle}>
+    <div className="tree-section" onClick={onToggle} title={title}>
       <span className="tchev">{open ? '▾' : '▸'}</span>
       <span className="tsec-label">{label}</span>
       <span className="tcount">{count}</span>
@@ -275,6 +277,7 @@ export function ProjectTree() {
               <>
                 <Section
                   label="Active"
+                  title="Projects with an agent open. Cycle through them with ⌃Tab / ⌃⇧Tab."
                   count={active.length}
                   open={!collapsed.active}
                   onToggle={() => toggle('active')}
