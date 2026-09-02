@@ -707,9 +707,9 @@ export function liveWorkspaceIds(s: Store): string[] {
 }
 
 /**
- * Project ids that have at least one agent terminal open, ordered for cycling with ⌘⌥←/→:
- * attention-needed first (waiting → error → working → done → idle), then by id as a stable
- * tiebreaker so the order doesn't jitter between keypresses when statuses are equal.
+ * Project ids that have at least one agent terminal open, in the order the sidebar's "Active"
+ * section lists them: attention-needed first (waiting → error → working → done → idle), then by
+ * name, then id — so ⌃Tab / ⌘⌥→ walk that list top to bottom and never jitter between presses.
  */
 export function activeAgentProjectIds(s: Store): string[] {
   const best: Record<string, AgentStatus> = {}
@@ -719,7 +719,22 @@ export function activeAgentProjectIds(s: Store): string[] {
     const cur = best[t.projectId]
     if (cur === undefined || statusRank(t.status) < statusRank(cur)) best[t.projectId] = t.status
   }
+  const name = (id: string): string => s.flat.find((p) => p.id === id)?.name ?? ''
   return Object.keys(best).sort(
-    (a, b) => statusRank(best[a]!) - statusRank(best[b]!) || (a < b ? -1 : a > b ? 1 : 0)
+    (a, b) =>
+      statusRank(best[a]!) - statusRank(best[b]!) || name(a).localeCompare(name(b)) || (a < b ? -1 : 1)
   )
+}
+
+/**
+ * Where ⌃Tab (dir 1) / ⌃⇧Tab (dir -1) should land: the next active project after the selected
+ * one, wrapping; from the dashboard (or a non-active project) the first / last active one.
+ * Null when no project has an agent open.
+ */
+export function nextActiveProjectId(s: Store, dir: 1 | -1): string | null {
+  const ids = activeAgentProjectIds(s)
+  if (ids.length === 0) return null
+  const idx = s.selectedProjectId ? ids.indexOf(s.selectedProjectId) : -1
+  if (idx === -1) return dir === 1 ? ids[0]! : ids[ids.length - 1]!
+  return ids[(idx + dir + ids.length) % ids.length]!
 }

@@ -122,8 +122,9 @@ input { font-family: inherit; }
 }
 
 /* ---------- Home (mission control) ----------
-   Hero = greeting + HUD telemetry; the one bold element is the corner glow + light sweep,
-   scoped to the dark theme so Total Commander keeps its classic face. */
+   Hero = greeting + HUD telemetry; the one bold element is the organism — the ambient
+   "being" on a canvas behind the text (overview/organism.ts) — plus the dark theme's corner
+   glow. Total Commander keeps its classic face: no organism there. */
 .home-hero {
   position: relative; overflow: hidden;
   background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
@@ -137,17 +138,10 @@ html[data-theme="dark"] .home-hero {
     var(--panel);
   border-color: var(--border2);
 }
-/* signature: a faint light beam sweeps the hero, like a slow radar pass */
-html[data-theme="dark"] .home-hero::after {
-  content: ''; position: absolute; top: 0; bottom: 0; left: -120px; width: 110px;
-  background: linear-gradient(90deg, transparent, rgba(90, 209, 255, 0.05) 45%, rgba(168, 139, 250, 0.05) 55%, transparent);
-  animation: hero-sweep 10s ease-in-out infinite; pointer-events: none;
-}
-@keyframes hero-sweep {
-  0% { transform: translateX(0); }
-  65%, 100% { transform: translateX(calc(100vw + 240px)); }
-}
-.hero-top { display: flex; align-items: flex-start; gap: 24px; }
+/* the organism: full-bleed canvas under the hero content; text/stats stack above it */
+.hero-organism { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+html[data-theme="totalcommander"] .hero-organism { display: none; }
+.hero-top { display: flex; align-items: flex-start; gap: 24px; position: relative; z-index: 1; }
 .hero-eyebrow {
   font-family: var(--mono); font-size: 9.5px; text-transform: uppercase;
   letter-spacing: 2.5px; color: var(--muted); margin-bottom: 7px;
@@ -168,7 +162,10 @@ html[data-theme="dark"] .home-hero::after {
   background: var(--panel2); border: none; border-bottom: 1px solid var(--accent);
   font: inherit; color: var(--text); width: 180px; outline: none; padding: 0 2px;
 }
-.hero-sub { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.hero-sub { margin-top: 6px; font-size: 12px; color: var(--muted); min-height: 15px; }
+/* the voice crossfades between lines (see overview/Voice.tsx) */
+.hero-voice { display: inline-block; transition: opacity 260ms ease; }
+.hero-voice.fading { opacity: 0; }
 .hero-clock-wrap { margin-left: auto; text-align: right; flex: none; }
 .hero-clock {
   font-family: var(--mono); font-size: 24px; font-weight: 500;
@@ -179,7 +176,7 @@ html[data-theme="dark"] .home-hero::after {
   font-family: var(--mono); font-size: 10px; text-transform: uppercase;
   letter-spacing: 1.5px; color: var(--muted); margin-top: 4px;
 }
-.hero-stats { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); }
+.hero-stats { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); position: relative; z-index: 1; }
 .hstat { display: inline-flex; align-items: baseline; gap: 7px; }
 .hstat .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .hstat .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
@@ -697,7 +694,7 @@ html[data-theme="dark"] .home-hero::after {
 @media (prefers-reduced-motion: reduce) {
   .board-card, .board-col, .board-add-col, .card-launch, .modal, .modal-overlay, .drop-line, .sdot { animation: none !important; transition: none !important; }
   .board-card:hover { transform: none; }
-  html[data-theme="dark"] .home-hero::after { animation: none; display: none; }
+  .hero-voice { transition: none; }
 }
 
 .tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
