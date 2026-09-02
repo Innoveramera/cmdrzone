@@ -8,6 +8,23 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.8.0] - 2026-09-02
+
+### Added
+
+- **The organism.** CmdrZone is alive on the dashboard: an ambient being lives behind the home
+  hero, one glowing nucleus per running agent. Working agents burn bright and spin, a waiting one
+  goes amber, stops and opens an eye that looks at you, errors jitter red. Claude Code's hook
+  events are its reflexes — reads inhale, writes exhale, Bash sparks, subagents bud off — and with
+  nothing running it folds into a single sleeping core that breathes and keeps a slow heartbeat.
+  Theme-aware (grayscale in Mono and Zone), off in Total Commander, still under reduced motion.
+- **The voice.** The line under the greeting now says what's actually going on — "Reading through
+  cmdrzone.", "Waiting for you — alerto needs an answer.", "Finished in api. Take a look when you
+  have a moment." — with quieter murmurs in between: how old the organism is, tokens digested
+  today, repos with uncommitted changes.
+- **⌃Tab / ⌃⇧Tab cycles through active projects** — the sidebar's Active list, top to bottom,
+  wrapping; ⌃⇧Tab goes back. ⌘⌥→ / ⌘⌥← now follow the same order.
+
 ## [0.7.0] - 2026-08-26
 
 ### Added
