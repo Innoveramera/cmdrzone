@@ -11,6 +11,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ProjectNode, UpNextCard } from '@shared/types'
 import { useStore } from '../state/store'
 import { STATUS_META, statusRank, relTime, dueInfo } from '../lib/format'
+import { OrganismCanvas } from './OrganismCanvas'
+import { Voice } from './Voice'
 
 function greetingFor(hour: number): string {
   if (hour < 5 || hour >= 23) return 'Working late'
@@ -338,20 +340,13 @@ export function Home() {
   return (
     <>
       <div className="home-hero">
+        <OrganismCanvas />
         <div className="hero-top">
           <div>
             <div className="hero-eyebrow">CmdrZone · command center</div>
             <Greeting />
             <div className="hero-sub">
-              {telemetry.waiting > 0
-                ? `${telemetry.waiting} agent${telemetry.waiting === 1 ? '' : 's'} need${telemetry.waiting === 1 ? 's' : ''} your input.`
-                : telemetry.overdue > 0
-                  ? `${telemetry.overdue} card${telemetry.overdue === 1 ? ' is' : 's are'} past due.`
-                  : telemetry.agents > 0
-                    ? 'Agents are working — all clear.'
-                    : telemetry.queued > 0
-                      ? 'Nothing running. Your queue is ready when you are.'
-                      : 'All quiet across your projects.'}
+              <Voice facts={telemetry} />
             </div>
           </div>
           <Clock />
