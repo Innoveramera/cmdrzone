@@ -42,6 +42,10 @@ drive them all.
   buttons, git status, dev-server **port detection** (open in browser), `.env` presence.
 - **Agent awareness** — per-project status (working / waiting / done / error), an agent activity
   rail, and native notifications when an agent needs you or finishes.
+- **A living dashboard** — the home hero hosts an ambient organism: one glowing nucleus per
+  running agent (bright and spinning while it works, amber with an eye on you while it waits),
+  twitching to Claude Code's hook events, folding into a sleeping, breathing core when nothing
+  runs — plus a one-line voice that says what the agents are doing.
 - **Keyboard-first** — `⌘K` fuzzy switcher, `⌃Tab` / `⌃⇧Tab` cycle through the projects with an
   agent running (also `⌘⌥→` / `⌘⌥←`), `⌘0` dashboard, `⌘1–9` pinned projects, `⌘T` new
   terminal, `⌘D` / `⌘⇧D` split pane.
