@@ -15,7 +15,6 @@ const DOCS: { file: string; flag: (p: ProjectNode) => boolean; label: string }[]
 
 export function ProjectInfo({ project }: { project: ProjectNode }) {
   const git = useStore((s) => s.gitByPath[project.path])
-  const agents = useStore((s) => s.agents)
   const terminals = useStore((s) => s.terminals)
   const available = DOCS.filter((d) => d.flag(project))
   const [docFile, setDocFile] = useState<string | undefined>(available[0]?.file)
@@ -45,11 +44,6 @@ export function ProjectInfo({ project }: { project: ProjectNode }) {
   const running = Object.values(terminals).filter(
     (t) => t.projectId === project.id && t.port && !t.exited
   )
-  const currentProvider = project.defaultProviderId ?? 'claude-code'
-  const changeProvider = (id: string) => {
-    void window.api.projects.setPref(project.path, 'defaultProviderId', id)
-    void useStore.getState().refresh()
-  }
 
   return (
     <div className="info">
@@ -95,22 +89,6 @@ export function ProjectInfo({ project }: { project: ProjectNode }) {
             ))}
           </div>
         )}
-
-        <div className="info-sec">
-          <div className="info-head">Default agent</div>
-          <select
-            className="select"
-            value={currentProvider}
-            onChange={(e) => changeProvider(e.target.value)}
-          >
-            {agents.map((a) => (
-              <option key={a.id} value={a.id} disabled={!a.installed}>
-                {a.name}
-                {a.installed ? '' : ' (not installed)'}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {scriptNames.length > 0 && (
           <div className="info-sec">

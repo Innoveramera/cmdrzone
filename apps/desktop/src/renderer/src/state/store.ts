@@ -8,7 +8,7 @@ import type { UpdateState, ChangelogEntry } from '@shared/update'
 import type { UsageSnapshot } from '@shared/usage'
 import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
 import { statusRank } from '../lib/format'
-import { agentLaunchOpts, resolveProvider } from '../lib/agents'
+import { agentLaunchOpts, providerLaunchOpts, resolveProvider } from '../lib/agents'
 import { composeNewProjectPrompt } from '../lib/prompt'
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
@@ -163,8 +163,8 @@ interface Store {
   createProject: (name: string, description: string, launchAgent: boolean) => Promise<string | null>
   openNewProject: () => void
   closeNewProject: () => void
-  /** create a git worktree + launch the project's agent in it; resolves an error string or null */
-  createWorktreeAgent: (projectId: string, name: string) => Promise<string | null>
+  /** create a git worktree + launch the chosen agent in it; resolves an error string or null */
+  createWorktreeAgent: (projectId: string, name: string, providerId: string) => Promise<string | null>
   /** merge a worktree's branch into the main repo and remove it; error string or null */
   mergeWorktree: (node: ProjectNode) => Promise<string | null>
   /** discard + remove a worktree; error string or null */
@@ -552,15 +552,15 @@ export const useStore = create<Store>((set, get) => ({
 
   closeNewProject: () => set({ newProjectOpen: false }),
 
-  createWorktreeAgent: async (projectId, name) => {
-    const parent = get().findProject(projectId)
+  createWorktreeAgent: async (projectId, name, providerId) => {
+    const provider = get().agents.find((a) => a.id === providerId && a.installed)
+    if (!provider) return 'The selected agent is not installed.'
     const res = await window.api.worktrees.add(projectId, name)
     if (!res.ok || !res.path) return res.error ?? 'Could not create the worktree.'
     await get().refresh()
     get().selectProject(res.path)
     get().setDetailMode('terminals')
-    // Launch with the PARENT's provider preference — the worktree has no overrides of its own.
-    get().newTerminal(res.path, agentLaunchOpts(get().agents, parent))
+    get().newTerminal(res.path, providerLaunchOpts(provider))
     return null
   },
 

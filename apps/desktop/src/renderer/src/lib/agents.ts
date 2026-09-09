@@ -29,7 +29,7 @@ export function resolveProvider(
   const wantId = project?.defaultProviderId ?? 'claude-code'
   return (
     agents.find((a) => a.id === wantId && a.installed) ??
-    agents.find((a) => a.isDefault) ??
+    agents.find((a) => a.isDefault && a.installed) ??
     agents.find((a) => a.installed)
   )
 }
@@ -41,12 +41,20 @@ export function agentLaunchOpts(
   resume = false
 ): { kind: 'agent'; providerId?: string; title: string; initialCommand: string } {
   const prov = resolveProvider(agents, project)
-  const pid = prov?.id ?? 'claude-code'
-  const base = launchCommandFor(pid)
+  return providerLaunchOpts(prov ?? { id: 'claude-code', name: 'Claude' }, resume)
+}
+
+/** Launch the explicitly chosen agent, independent of the project's default. */
+export function providerLaunchOpts(
+  provider: Pick<AgentProviderInfo, 'id' | 'name'>,
+  resume = false
+): { kind: 'agent'; providerId: string; title: string; initialCommand: string } {
+  const base = launchCommandFor(provider.id)
+  const continueClaude = resume && provider.id === 'claude-code'
   return {
     kind: 'agent',
-    providerId: prov?.id,
-    title: resume ? 'Claude ↻' : prov?.name ?? 'Claude',
-    initialCommand: resume && pid === 'claude-code' ? `${base} --continue` : base
+    providerId: provider.id,
+    title: continueClaude ? `${provider.name} ↻` : provider.name,
+    initialCommand: continueClaude ? `${base} --continue` : base
   }
 }

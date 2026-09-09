@@ -8,6 +8,20 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.9.0] - 2026-09-09
+
+### Added
+
+- **One launch tab per installed AI agent.** Projects now expose a separate start tab for every
+  detected agent, so Claude Code, Codex CLI, Aider, Gemini CLI, and opencode can run side by side
+  without changing a project setting. Worktree creation also lets you choose which installed agent
+  to launch.
+
+### Changed
+
+- Removed the per-project default-agent selector from the project information panel. Claude resume
+  remains available as an explicit action when Claude Code is installed.
+
 ## [0.8.0] - 2026-09-02
 
 ### Added

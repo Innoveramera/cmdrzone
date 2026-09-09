@@ -2,11 +2,12 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { useState } from 'react'
+import type { AgentProviderInfo } from '@shared/types'
 import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
 import { STATUS_META } from '../lib/format'
 import { imageFilesFrom, droppedImagePath, quotePath } from '../lib/images'
-import { agentLaunchOpts, resolveProvider } from '../lib/agents'
+import { providerLaunchOpts, resolveProvider } from '../lib/agents'
 
 export function TerminalDeck({ projectId }: { projectId: string }) {
   const terminals = useStore((s) => s.terminals)
@@ -24,6 +25,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
   const [wtName, setWtName] = useState('')
   const [wtBusy, setWtBusy] = useState(false)
   const [wtErr, setWtErr] = useState<string | null>(null)
+  const [wtProviderId, setWtProviderId] = useState('')
 
   // Save the dropped image(s) and type their path(s) into the pane's PTY — no Enter, so the
   // user can add context and submit. Claude Code reads the image straight from the path.
@@ -40,16 +42,19 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
     .map((g) => groups[g])
     .filter((g): g is NonNullable<typeof g> => !!g && g.projectId === projectId)
 
-  const newAgent = (resume = false) =>
-    useStore.getState().newTerminal(projectId, agentLaunchOpts(agents, project, resume))
+  const availableAgents = agents.filter((a) => a.installed)
+  const claude = availableAgents.find((a) => a.id === 'claude-code')
+  const newAgent = (provider: AgentProviderInfo, resume = false) =>
+    useStore.getState().newTerminal(projectId, providerLaunchOpts(provider, resume))
   const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
-  const agentName = resolveProvider(agents, project)?.name ?? 'Claude'
+  const wtProvider = availableAgents.find((a) => a.id === wtProviderId) ?? resolveProvider(agents, project)
+  const agentName = wtProvider?.name ?? 'agent'
 
   const createWorktree = async (): Promise<void> => {
-    if (wtBusy || !wtName.trim()) return
+    if (wtBusy || !wtName.trim() || !wtProvider) return
     setWtBusy(true)
     setWtErr(null)
-    const err = await useStore.getState().createWorktreeAgent(projectId, wtName)
+    const err = await useStore.getState().createWorktreeAgent(projectId, wtName, wtProvider.id)
     setWtBusy(false)
     if (err) setWtErr(err)
     else {
@@ -91,24 +96,29 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
           )
         })}
         <span className="tabstrip-div" />
-        <button
-          className="tab add"
-          onClick={() => newAgent(false)}
-          title={`New ${agentName} session`}
-        >
-          ＋ 🤖 {agentName}
-        </button>
-        <button
-          className="tab add"
-          onClick={() => newAgent(true)}
-          title={`Resume last ${agentName} session (--continue)`}
-        >
-          ↻ Resume
-        </button>
+        {availableAgents.map((agent) => (
+          <button
+            key={agent.id}
+            className="tab add"
+            onClick={() => newAgent(agent)}
+            title={`New ${agent.name} session`}
+          >
+            ＋ 🤖 {agent.name}
+          </button>
+        ))}
+        {claude && (
+          <button
+            className="tab add"
+            onClick={() => newAgent(claude, true)}
+            title="Resume last Claude Code session (--continue)"
+          >
+            ↻ Resume Claude
+          </button>
+        )}
         <button className="tab add" onClick={newShell} title="New shell">
           ＋ $ Shell
         </button>
-        {git?.isRepo && !project?.worktreeOf && (
+        {availableAgents.length > 0 && git?.isRepo && !project?.worktreeOf && (
           <button
             className={`tab add ${wtOpen ? 'active' : ''}`}
             onClick={() => setWtOpen((o) => !o)}
@@ -145,6 +155,19 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
             {agentName} there — run agents in parallel without stepping on each other. Merge it
             back (or discard it) from the worktree's banner when done.
           </div>
+          <label className="wt-pop-row">
+            Agent
+            <select
+              className="select"
+              value={wtProvider?.id ?? ''}
+              disabled={wtBusy}
+              onChange={(e) => setWtProviderId(e.target.value)}
+            >
+              {availableAgents.map((agent) => (
+                <option key={agent.id} value={agent.id}>{agent.name}</option>
+              ))}
+            </select>
+          </label>
           <div className="wt-pop-row">
             <input
               className="select"
@@ -158,7 +181,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
                 else if (e.key === 'Escape') setWtOpen(false)
               }}
             />
-            <button className="ghost" disabled={wtBusy || !wtName.trim()} onClick={() => void createWorktree()}>
+            <button className="ghost" disabled={wtBusy || !wtName.trim() || !wtProvider} onClick={() => void createWorktree()}>
               {wtBusy ? 'Creating…' : `Create & launch ${agentName}`}
             </button>
           </div>
@@ -169,14 +192,9 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
       <div className="deck-body">
         {myGroups.length === 0 && (
           <div className="deck-empty muted">
-            No sessions yet.{' '}
-            <button className="link" onClick={() => newAgent(false)}>
-              Launch Claude →
-            </button>
-            {' · '}
-            <button className="link" onClick={() => newAgent(true)}>
-              Resume (--continue)
-            </button>
+            {availableAgents.length > 0
+              ? 'No sessions yet. Choose an agent above to start. You can run different agents side by side.'
+              : 'No AI agents detected. Install an agent CLI and refresh projects, or open a shell above.'}
           </div>
         )}
         {myGroups.map((g) => (

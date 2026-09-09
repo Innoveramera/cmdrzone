@@ -27,9 +27,10 @@ drive them all.
 - **Project tree** from a root folder you pick — projects + monorepo sub-projects, with
   pinned/favorites, a stable per-project color, git dirty count, and live agent/session indicators.
   Double-click a project name to **rename its folder** on disk (confirmed; board + prefs follow).
-- **Embedded agent terminals** — launch Claude Code (default) or Aider / Codex / Gemini / opencode
-  per project, in real PTYs with your full login-shell PATH. Resume the last Claude conversation in
-  one click (`claude --continue`).
+- **Embedded agent terminals** — each installed agent (Claude Code / Aider / Codex / Gemini /
+  opencode) has its own launch tab in every project. Run different agents side by side in real
+  PTYs with your full login-shell PATH, with no project setting to change. Resume the last Claude
+  conversation in one click (`claude --continue`), or choose an agent for an isolated worktree.
 - **Code editor** — a Files + **Monaco** (VS Code's editor) tab with multi-file tabs, IntelliSense,
   minimap, and save.
 - **Board** — a per-project Trello-style Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with
