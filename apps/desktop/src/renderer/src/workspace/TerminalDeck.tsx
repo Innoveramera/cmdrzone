@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { AgentProviderInfo } from '@shared/types'
 import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
@@ -159,7 +160,11 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
             >
               ▾
             </button>
-            {menuFor === agent.id && (
+            {menuFor === agent.id &&
+              // Portaled to <body>: the grayscale `filter` the Mono/Zone themes put on .tab.add
+              // would otherwise turn position:fixed into "relative to this button" and the strip's
+              // overflow would clip the menu.
+              createPortal(
               <div className="agent-menu" style={{ left: menuPos.x, top: menuPos.y }} onMouseDown={(e) => e.stopPropagation()}>
                 <button onClick={() => { setMenuFor(null); newAgent(agent) }}>
                   <b>Start here</b>
@@ -183,7 +188,8 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
                     <span className="muted small">claude --continue</span>
                   </button>
                 )}
-              </div>
+              </div>,
+              document.body
             )}
           </span>
         ))}

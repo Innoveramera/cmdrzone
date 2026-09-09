@@ -8,6 +8,15 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.10.1] - 2026-09-09
+
+### Fixed
+
+- The agent buttons' ▾ menu (start here / new worktree / resume) did not appear in the **Mono**
+  and **Zone** themes: their grayscale filter on the tab strip turned the menu's fixed positioning
+  into "relative to the button", and the strip's overflow clipped it. The menu now renders through
+  a portal outside the strip.
+
 ## [0.10.0] - 2026-09-09
 
 ### Added
