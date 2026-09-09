@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ProjectNode } from '@shared/types'
 import { FileExplorer } from './FileExplorer'
 import { CodeEditor } from './CodeEditor'
@@ -16,6 +16,15 @@ export function ProjectEditor({ project }: { project: ProjectNode }) {
     setOpen((o) => (o.includes(p) ? o : [...o, p]))
     setActive(p)
   }
+  // The Changes tab asks us to open a file ("Open in editor") via a window event.
+  useEffect(() => {
+    const onOpen = (e: Event): void => {
+      const d = (e as CustomEvent<{ projectId: string; path: string }>).detail
+      if (d?.projectId === project.id && d.path) openFile(d.path)
+    }
+    window.addEventListener('cz:open-file', onOpen)
+    return () => window.removeEventListener('cz:open-file', onOpen)
+  }, [project.id])
   const closeFile = (p: string) => {
     setOpen((prev) => {
       const next = prev.filter((x) => x !== p)

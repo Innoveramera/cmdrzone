@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Fredrik Hammarström
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { AgentProviderInfo } from '@shared/types'
 import { useStore } from '../state/store'
 import { XTermView } from '../terminal/XTermView'
 import { STATUS_META } from '../lib/format'
 import { imageFilesFrom, droppedImagePath, quotePath } from '../lib/images'
-import { providerLaunchOpts, resolveProvider } from '../lib/agents'
+import { providerLaunchOpts, resolveProvider, PERMISSION_MODES, isPermissionMode, supportsPermissionMode } from '../lib/agents'
 
 export function TerminalDeck({ projectId }: { projectId: string }) {
   const terminals = useStore((s) => s.terminals)
@@ -20,12 +20,28 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
   const git = useStore((s) => (project ? s.gitByPath[project.path] : undefined))
   // Which pane is under an active image drag (for the drop overlay).
   const [dropPane, setDropPane] = useState<string | null>(null)
-  // "New agent in worktree" popover state.
-  const [wtOpen, setWtOpen] = useState(false)
+  // Per-agent ▾ menu (start here / in a worktree / resume) and the worktree-name popover it opens.
+  const [menuFor, setMenuFor] = useState<string | null>(null)
+  // The tab strip scrolls horizontally (overflow clips), so the menu is position:fixed at the caret.
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
+  const [wtFor, setWtFor] = useState<string | null>(null)
   const [wtName, setWtName] = useState('')
   const [wtBusy, setWtBusy] = useState(false)
   const [wtErr, setWtErr] = useState<string | null>(null)
-  const [wtProviderId, setWtProviderId] = useState('')
+
+  useEffect(() => {
+    if (!menuFor) return
+    const close = (): void => setMenuFor(null)
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('mousedown', close)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('mousedown', close)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menuFor])
 
   // Save the dropped image(s) and type their path(s) into the pane's PTY — no Enter, so the
   // user can add context and submit. Claude Code reads the image straight from the path.
@@ -43,12 +59,14 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
     .filter((g): g is NonNullable<typeof g> => !!g && g.projectId === projectId)
 
   const availableAgents = agents.filter((a) => a.installed)
-  const claude = availableAgents.find((a) => a.id === 'claude-code')
+  const mode = project?.permissionMode ?? 'supervised'
+  const modeMeta = PERMISSION_MODES.find((m) => m.id === mode) ?? PERMISSION_MODES[0]!
   const newAgent = (provider: AgentProviderInfo, resume = false) =>
-    useStore.getState().newTerminal(projectId, providerLaunchOpts(provider, resume))
+    useStore.getState().newTerminal(projectId, providerLaunchOpts(provider, resume, mode))
   const newShell = () => useStore.getState().newTerminal(projectId, { kind: 'shell', title: 'shell' })
-  const wtProvider = availableAgents.find((a) => a.id === wtProviderId) ?? resolveProvider(agents, project)
+  const wtProvider = availableAgents.find((a) => a.id === wtFor) ?? resolveProvider(agents, project)
   const agentName = wtProvider?.name ?? 'agent'
+  const canWorktree = !!git?.isRepo && !project?.worktreeOf
 
   const createWorktree = async (): Promise<void> => {
     if (wtBusy || !wtName.trim() || !wtProvider) return
@@ -58,7 +76,7 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
     setWtBusy(false)
     if (err) setWtErr(err)
     else {
-      setWtOpen(false)
+      setWtFor(null)
       setWtName('')
     }
   }
@@ -82,6 +100,14 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
                 {active?.kind === 'agent' ? '🤖 ' : active?.kind === 'devserver' ? '▷ ' : '$ '}
                 {active?.title}
               </span>
+              {active?.kind === 'agent' && active.permissionMode && active.permissionMode !== 'supervised' && (
+                <span
+                  className={`tab-mode mode-${active.permissionMode}`}
+                  title={`${PERMISSION_MODES.find((m) => m.id === active.permissionMode)?.label ?? ''} — set when this session was launched`}
+                >
+                  {PERMISSION_MODES.find((m) => m.id === active.permissionMode)?.glyph}
+                </span>
+              )}
               {g.paneIds.length > 1 && <span className="tab-badge">⊞{g.paneIds.length}</span>}
               <span
                 className="tab-x"
@@ -96,37 +122,74 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
           )
         })}
         <span className="tabstrip-div" />
-        {availableAgents.map((agent) => (
-          <button
-            key={agent.id}
-            className="tab add"
-            onClick={() => newAgent(agent)}
-            title={`New ${agent.name} session`}
+        {availableAgents.length > 0 && project && (
+          <select
+            className={`mode-select mode-${mode}`}
+            value={mode}
+            onChange={(e) => {
+              if (isPermissionMode(e.target.value)) void useStore.getState().setPermissionMode(project, e.target.value)
+            }}
+            title={`Permission mode for new agent sessions in this project — ${modeMeta.description}${
+              availableAgents.some((a) => !supportsPermissionMode(a.id, mode)) && mode !== 'supervised'
+                ? `\n(${availableAgents.filter((a) => !supportsPermissionMode(a.id, mode)).map((a) => a.name).join(', ')}: no equivalent, runs supervised)`
+                : ''
+            }`}
           >
-            ＋ 🤖 {agent.name}
-          </button>
-        ))}
-        {claude && (
-          <button
-            className="tab add"
-            onClick={() => newAgent(claude, true)}
-            title="Resume last Claude Code session (--continue)"
-          >
-            ↻ Resume Claude
-          </button>
+            {PERMISSION_MODES.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.glyph ? `${m.glyph} ` : ''}{m.label}
+              </option>
+            ))}
+          </select>
         )}
+        {availableAgents.map((agent) => (
+          <span key={agent.id} className={`tab add agent-split ${menuFor === agent.id ? 'active' : ''}`}>
+            <button className="split-main" onClick={() => newAgent(agent)} title={`New ${agent.name} session in this project`}>
+              ＋ 🤖 {agent.name}
+            </button>
+            <button
+              className="split-caret"
+              title="More ways to start"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                const r = e.currentTarget.parentElement?.getBoundingClientRect()
+                setMenuPos(r ? { x: r.left, y: r.bottom + 4 } : { x: 0, y: 0 })
+                setMenuFor((m) => (m === agent.id ? null : agent.id))
+              }}
+            >
+              ▾
+            </button>
+            {menuFor === agent.id && (
+              <div className="agent-menu" style={{ left: menuPos.x, top: menuPos.y }} onMouseDown={(e) => e.stopPropagation()}>
+                <button onClick={() => { setMenuFor(null); newAgent(agent) }}>
+                  <b>Start here</b>
+                  <span className="muted small">in {project?.name ?? 'this project'}</span>
+                </button>
+                {canWorktree && (
+                  <button
+                    onClick={() => {
+                      setMenuFor(null)
+                      setWtErr(null)
+                      setWtFor(agent.id)
+                    }}
+                  >
+                    <b>⎇ Start in a new worktree…</b>
+                    <span className="muted small">isolated checkout on its own branch — run agents in parallel</span>
+                  </button>
+                )}
+                {agent.id === 'claude-code' && (
+                  <button onClick={() => { setMenuFor(null); newAgent(agent, true) }}>
+                    <b>↻ Resume last conversation</b>
+                    <span className="muted small">claude --continue</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </span>
+        ))}
         <button className="tab add" onClick={newShell} title="New shell">
           ＋ $ Shell
         </button>
-        {availableAgents.length > 0 && git?.isRepo && !project?.worktreeOf && (
-          <button
-            className={`tab add ${wtOpen ? 'active' : ''}`}
-            onClick={() => setWtOpen((o) => !o)}
-            title="New agent in an isolated git worktree — work in parallel on its own branch, no file collisions"
-          >
-            ＋ ⎇ Worktree
-          </button>
-        )}
         <span className="spacer" />
         {durable?.available ? (
           <button
@@ -147,27 +210,14 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
         )}
       </div>
 
-      {wtOpen && (
+      {wtFor && wtProvider && (
         <div className="wt-pop">
-          <div className="wt-pop-title">⎇ New agent in a git worktree</div>
+          <div className="wt-pop-title">⎇ New {agentName} session in a git worktree</div>
           <div className="muted small">
             Creates an isolated checkout on branch <code>cz/&lt;name&gt;</code> and launches{' '}
             {agentName} there — run agents in parallel without stepping on each other. Merge it
             back (or discard it) from the worktree's banner when done.
           </div>
-          <label className="wt-pop-row">
-            Agent
-            <select
-              className="select"
-              value={wtProvider?.id ?? ''}
-              disabled={wtBusy}
-              onChange={(e) => setWtProviderId(e.target.value)}
-            >
-              {availableAgents.map((agent) => (
-                <option key={agent.id} value={agent.id}>{agent.name}</option>
-              ))}
-            </select>
-          </label>
           <div className="wt-pop-row">
             <input
               className="select"
@@ -178,11 +228,14 @@ export function TerminalDeck({ projectId }: { projectId: string }) {
               onChange={(e) => setWtName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void createWorktree()
-                else if (e.key === 'Escape') setWtOpen(false)
+                else if (e.key === 'Escape') setWtFor(null)
               }}
             />
             <button className="ghost" disabled={wtBusy || !wtName.trim() || !wtProvider} onClick={() => void createWorktree()}>
               {wtBusy ? 'Creating…' : `Create & launch ${agentName}`}
+            </button>
+            <button className="ghost" disabled={wtBusy} onClick={() => setWtFor(null)}>
+              Cancel
             </button>
           </div>
           {wtErr && <div className="err">{wtErr}</div>}

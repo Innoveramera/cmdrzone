@@ -10,6 +10,12 @@ export type TerminalKind = 'agent' | 'shell' | 'devserver'
 
 export type ProjectKind = 'project' | 'group' | 'docs'
 
+/**
+ * How much an agent may do without asking (T3 Code's four modes, mapped onto each CLI's own
+ * flags in renderer/lib/agents.ts). 'supervised' = the CLI's default prompting.
+ */
+export type PermissionMode = 'supervised' | 'acceptEdits' | 'plan' | 'full'
+
 export interface GitStatus {
   isRepo: boolean
   branch?: string
@@ -30,6 +36,8 @@ export interface ProjectNode {
   isPinned: boolean
   isHidden: boolean
   defaultProviderId?: string
+  /** remembered permission mode for agents launched in this project (default: supervised) */
+  permissionMode?: PermissionMode
   /** per-project Figma file/proto URL (project override; empty/undefined = not connected) */
   figmaUrl?: string
   /** set on worktree child nodes: absolute path of the main repo this is a worktree of */

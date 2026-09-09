@@ -4,7 +4,8 @@
 import { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 import { useStore } from '../state/store'
-import { THEMES } from '../theme/themes'
+import { resolveTheme } from '../theme/themes'
+import type { CustomTheme } from '../theme/custom'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -71,7 +72,20 @@ monaco.editor.defineTheme('zone', {
   }
 })
 
-function languageFromPath(path: string): string {
+// Custom (imported) themes are registered with Monaco on first use, keyed by their id.
+// Re-registering with the same id is harmless, so this just tracks what's been defined.
+const definedCustom = new Set<string>()
+export function ensureMonacoTheme(themeId: string, customs: CustomTheme[]): string {
+  const def = resolveTheme(themeId, customs)
+  const c = customs.find((t) => t.id === themeId)
+  if (c && !definedCustom.has(c.id)) {
+    monaco.editor.defineTheme(c.id, { base: c.monaco.base, inherit: true, rules: c.monaco.rules, colors: c.monaco.colors })
+    definedCustom.add(c.id)
+  }
+  return def.monaco
+}
+
+export function languageFromPath(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase() ?? ''
   const map: Record<string, string> = {
     ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
@@ -112,7 +126,7 @@ export function CodeEditor({ path }: { path: string }) {
     const ed = monaco.editor.create(hostRef.current, {
       value: '',
       language: languageFromPath(path),
-      theme: THEMES[useStore.getState().theme].monaco,
+      theme: ensureMonacoTheme(useStore.getState().theme, useStore.getState().customThemes),
       automaticLayout: true,
       fontSize: 13,
       fontFamily: 'Menlo, "SF Mono", monospace',
@@ -142,9 +156,10 @@ export function CodeEditor({ path }: { path: string }) {
 
   // Monaco themes are global; re-apply when the user switches themes.
   const theme = useStore((s) => s.theme)
+  const customThemes = useStore((s) => s.customThemes)
   useEffect(() => {
-    monaco.editor.setTheme(THEMES[theme].monaco)
-  }, [theme])
+    monaco.editor.setTheme(ensureMonacoTheme(theme, customThemes))
+  }, [theme, customThemes])
 
   return (
     <div className="editor">

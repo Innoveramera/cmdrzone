@@ -2,11 +2,21 @@
 // Copyright (C) 2026 Fredrik Hammarström
 
 import { create } from 'zustand'
-import type { ProjectNode, AgentProviderInfo, GitStatus, UpNextCard } from '@shared/types'
+import type { ProjectNode, AgentProviderInfo, GitStatus, UpNextCard, PermissionMode } from '@shared/types'
+import type { PrInfo } from '@shared/git'
 import { tmuxSessionName, type DurableStatus } from '@shared/tmux'
 import type { UpdateState, ChangelogEntry } from '@shared/update'
 import type { UsageSnapshot } from '@shared/usage'
-import { type ThemeId, isThemeId, applyThemeToDom } from '../theme/themes'
+import { isThemeId, applyThemeToDom } from '../theme/themes'
+import {
+  type CustomTheme,
+  CUSTOM_THEMES_KEY,
+  importThemeFile,
+  exportThemeFile,
+  themeFromPalette,
+  parseCustomThemes,
+  serializeCustomThemes
+} from '../theme/custom'
 import { statusRank } from '../lib/format'
 import { agentLaunchOpts, providerLaunchOpts, resolveProvider } from '../lib/agents'
 import { composeNewProjectPrompt } from '../lib/prompt'
@@ -35,6 +45,8 @@ export interface TerminalTab {
   hooked?: boolean
   /** Claude Code's own session uuid (from SessionStart) — enables `--resume <id>` later */
   claudeSessionId?: string
+  /** the permission mode this agent was launched with (badge on the tab); unset = supervised */
+  permissionMode?: PermissionMode
 }
 
 /** A tab in the deck = a group of one or more terminal panes, split row/col. */
@@ -51,7 +63,7 @@ export interface PaneGroup {
  * runtime fields (status/lastLine/exited/port). */
 type SavedTab = Pick<
   TerminalTab,
-  'id' | 'projectId' | 'title' | 'kind' | 'providerId' | 'color' | 'cwd'
+  'id' | 'projectId' | 'title' | 'kind' | 'providerId' | 'color' | 'cwd' | 'permissionMode'
 >
 
 interface WorkspaceSnapshot {
@@ -61,6 +73,8 @@ interface WorkspaceSnapshot {
   groupOrder: string[]
   activeGroupByProject: Record<string, string>
 }
+
+export type DetailMode = 'terminals' | 'editor' | 'board' | 'design' | 'git'
 
 let seq = 0
 const uid = (p: string) => `${p}-${++seq}-${Date.now()}`
@@ -85,6 +99,7 @@ interface NewTermOpts {
   title?: string
   cwd?: string
   spawn?: { command: string; args: string[] }
+  permissionMode?: PermissionMode
 }
 
 interface Store {
@@ -106,7 +121,7 @@ interface Store {
   sidebarCollapsed: boolean
   /** left sidebar width in px (resizable, persisted) */
   sidebarWidth: number
-  detailMode: 'terminals' | 'editor' | 'board' | 'design'
+  detailMode: DetailMode
   /** durable-session (tmux) status; null until probed */
   durable: DurableStatus | null
   /** gate: don't persist the workspace until a restore attempt has run (else we'd wipe it) */
@@ -119,8 +134,12 @@ interface Store {
   changelog: ChangelogEntry[]
   /** whether the "What's New" dialog is open */
   whatsNewOpen: boolean
-  /** active UI theme */
-  theme: ThemeId
+  /** active UI theme: a built-in ThemeId or a custom theme's id */
+  theme: string
+  /** user-imported / created themes (persisted) */
+  customThemes: CustomTheme[]
+  /** GitHub pull request per project/worktree path (null = looked up, none) */
+  prByPath: Record<string, PrInfo | null>
   /** whether the Settings dialog is open */
   settingsOpen: boolean
   /** whether the New Project dialog is open */
@@ -149,7 +168,7 @@ interface Store {
   setSidebarWidth: (w: number) => void
   /** load persisted layout (sidebar width/collapse, info panel) on boot */
   initLayout: () => Promise<void>
-  setDetailMode: (m: 'terminals' | 'editor' | 'board' | 'design') => void
+  setDetailMode: (m: DetailMode) => void
   newTerminal: (projectId: string, opts: NewTermOpts) => string
   splitActive: (projectId: string, dir: SplitDir, opts: NewTermOpts) => string
   closeTerminal: (id: string) => void
@@ -158,6 +177,8 @@ interface Store {
   focusTerminal: (projectId: string, terminalId: string) => void
   patchTerminal: (id: string, patch: Partial<TerminalTab>) => void
   togglePin: (node: ProjectNode) => Promise<void>
+  /** remember the permission mode for agents launched in a project (per-project pref) */
+  setPermissionMode: (node: ProjectNode, mode: PermissionMode) => Promise<void>
   renameProject: (oldPath: string, newName: string) => Promise<void>
   /** create <root>/<name>, select it, optionally launch Claude seeded with the idea; error string or null */
   createProject: (name: string, description: string, launchAgent: boolean) => Promise<string | null>
@@ -178,7 +199,15 @@ interface Store {
   closeWhatsNew: () => void
   /** load the persisted theme and apply it to the DOM on boot */
   initTheme: () => Promise<void>
-  setTheme: (t: ThemeId) => void
+  setTheme: (t: string) => void
+  /** pick a VS Code / CmdrZone theme file, add it, and switch to it; error string or null */
+  importTheme: () => Promise<string | null>
+  /** build a theme from canvas + accent colors, add it, and switch to it */
+  createPaletteTheme: (name: string, appearance: 'dark' | 'light', canvas: string, accent: string) => void
+  deleteCustomTheme: (id: string) => void
+  exportCustomTheme: (id: string) => Promise<void>
+  /** look up the GitHub PR for a repo/worktree path (cached in prByPath) */
+  loadPr: (path: string, branch?: string) => Promise<void>
   openSettings: () => void
   closeSettings: () => void
 }
@@ -194,6 +223,7 @@ function makeTab(projectId: string, opts: NewTermOpts, project?: ProjectNode): T
     cwd: opts.cwd ?? project?.path ?? '',
     initialCommand: opts.initialCommand,
     spawn: opts.spawn,
+    permissionMode: opts.permissionMode,
     status: opts.kind === 'agent' ? 'working' : 'idle',
     lastLine: '',
     exited: false
@@ -224,6 +254,8 @@ export const useStore = create<Store>((set, get) => ({
   changelog: [],
   whatsNewOpen: false,
   theme: 'dark',
+  customThemes: [],
+  prByPath: {},
   settingsOpen: false,
   newProjectOpen: false,
   usage: null,
@@ -263,6 +295,8 @@ export const useStore = create<Store>((set, get) => ({
     }
     for (const n of flat) {
       if (n.kind === 'project') void get().loadGit(n.path)
+      // Worktrees are where agent branches live — show their PR state in the sidebar.
+      if (n.worktreeOf) void get().loadPr(n.path, n.branch)
     }
     void get().loadUpNext()
   },
@@ -392,6 +426,7 @@ export const useStore = create<Store>((set, get) => ({
       groupOrder: [...s.groupOrder, gid],
       activeGroupByProject: { ...s.activeGroupByProject, [projectId]: gid }
     }))
+    startCheckpoint(tab)
     return tab.id
   },
 
@@ -412,12 +447,15 @@ export const useStore = create<Store>((set, get) => ({
         }
       }
     })
+    startCheckpoint(tab)
     return tab.id
   },
 
   closeTerminal: (id) => {
     // Closing a tab is intent to end it for good — destroy the durable session, don't just detach.
     window.api.pty.kill(id)
+    const closing = get().terminals[id]
+    if (closing?.kind === 'agent' && closing.cwd) window.api.git.dropCheckpoints(closing.cwd, id)
     set((s) => {
       const tab = s.terminals[id]
       const terminals = { ...s.terminals }
@@ -481,6 +519,14 @@ export const useStore = create<Store>((set, get) => ({
   togglePin: async (node) => {
     await window.api.projects.setPref(node.path, 'pinned', node.isPinned ? '0' : '1')
     await get().refresh()
+  },
+
+  setPermissionMode: async (node, mode) => {
+    // Patch in place first so the picker doesn't lag behind the rescan.
+    const apply = (n: ProjectNode): ProjectNode =>
+      n.path === node.path ? { ...n, permissionMode: mode === 'supervised' ? undefined : mode } : n.children ? { ...n, children: n.children.map(apply) } : n
+    set((s) => ({ projects: s.projects.map(apply), flat: s.flat.map((n) => (n.path === node.path ? apply(n) : n)) }))
+    await window.api.projects.setPref(node.path, 'permissionMode', mode === 'supervised' ? null : mode)
   },
 
   renameProject: async (oldPath, newName) => {
@@ -560,7 +606,9 @@ export const useStore = create<Store>((set, get) => ({
     await get().refresh()
     get().selectProject(res.path)
     get().setDetailMode('terminals')
-    get().newTerminal(res.path, providerLaunchOpts(provider))
+    // The worktree inherits the parent project's remembered permission mode.
+    const parent = get().flat.find((p) => p.id === projectId)
+    get().newTerminal(res.path, providerLaunchOpts(provider, false, parent?.permissionMode))
     return null
   },
 
@@ -609,22 +657,83 @@ export const useStore = create<Store>((set, get) => ({
   closeWhatsNew: () => set({ whatsNewOpen: false }),
 
   initTheme: async () => {
-    const saved = await window.api.settings.get('theme')
-    const theme: ThemeId = isThemeId(saved) ? saved : 'dark'
-    applyThemeToDom(theme)
-    set({ theme })
+    const [saved, rawCustom] = await Promise.all([
+      window.api.settings.get('theme'),
+      window.api.settings.get(CUSTOM_THEMES_KEY)
+    ])
+    const customThemes = parseCustomThemes(rawCustom)
+    const theme = isThemeId(saved) || customThemes.some((t) => t.id === saved) ? saved : 'dark'
+    applyThemeToDom(theme, customThemes)
+    set({ theme, customThemes })
   },
 
   setTheme: (theme) => {
-    applyThemeToDom(theme)
+    applyThemeToDom(theme, get().customThemes)
     set({ theme })
     void window.api.settings.set('theme', theme)
+  },
+
+  importTheme: async () => {
+    const file = await window.api.theme.importFile()
+    if (!file) return null
+    let t: CustomTheme
+    try {
+      t = importThemeFile(file.name, file.content)
+    } catch (e) {
+      return (e as Error).message
+    }
+    addCustomTheme(set, get, t)
+    return null
+  },
+
+  createPaletteTheme: (name, appearance, canvas, accent) => {
+    addCustomTheme(set, get, themeFromPalette({ name, appearance, canvas, accent }))
+  },
+
+  deleteCustomTheme: (id) => {
+    const customThemes = get().customThemes.filter((t) => t.id !== id)
+    set({ customThemes })
+    void window.api.settings.set(CUSTOM_THEMES_KEY, serializeCustomThemes(customThemes))
+    if (get().theme === id) get().setTheme('dark')
+  },
+
+  exportCustomTheme: async (id) => {
+    const t = get().customThemes.find((x) => x.id === id)
+    if (t) await window.api.theme.exportFile(t.label, exportThemeFile(t))
+  },
+
+  loadPr: async (path, branch) => {
+    try {
+      const pr = await window.api.git.prStatus(path, branch)
+      set((s) => ({ prByPath: { ...s.prByPath, [path]: pr } }))
+    } catch {
+      /* gh missing / offline — leave whatever we had */
+    }
   },
 
   openSettings: () => set({ settingsOpen: true }),
 
   closeSettings: () => set({ settingsOpen: false })
 }))
+
+// Snapshot the working tree the moment an agent session starts, so the Changes tab can show
+// exactly what that agent did (hidden ref; see core/git/snapshot.ts). Fire-and-forget: a
+// non-repo cwd just yields null.
+function startCheckpoint(tab: TerminalTab): void {
+  if (tab.kind !== 'agent' || !tab.cwd) return
+  void window.api.git.checkpoint(tab.cwd, tab.id, 'start')
+}
+
+function addCustomTheme(
+  set: (p: Partial<Store>) => void,
+  get: () => Store,
+  t: CustomTheme
+): void {
+  const customThemes = [...get().customThemes, t]
+  set({ customThemes })
+  void window.api.settings.set(CUSTOM_THEMES_KEY, serializeCustomThemes(customThemes))
+  get().setTheme(t.id)
+}
 
 // After a worktree is gone on disk: end its sessions (their cwd was just deleted) and move the
 // selection to the parent project so the UI never points at a dead node.
@@ -670,7 +779,8 @@ function serializeWorkspace(s: Store): WorkspaceSnapshot {
       kind: t.kind,
       providerId: t.providerId,
       color: t.color,
-      cwd: t.cwd
+      cwd: t.cwd,
+      permissionMode: t.permissionMode
     }
   }
   return { v: 1, terminals, groups: s.groups, groupOrder: s.groupOrder, activeGroupByProject: s.activeGroupByProject }

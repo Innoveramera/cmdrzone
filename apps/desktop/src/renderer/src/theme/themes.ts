@@ -7,6 +7,8 @@
 // This module owns the bits CSS can't reach: the xterm + Monaco theming, the
 // catalog the Settings picker renders, and applying the data-theme attribute.
 
+import { type CustomTheme, CUSTOM_DOM_ID, applyCustomThemeCss, isCustomThemeId } from './custom'
+
 export type ThemeId = 'dark' | 'mono' | 'zone' | 'totalcommander'
 
 /** Minimal xterm theme — xterm merges this over its defaults, so a few keys suffice.
@@ -126,7 +128,32 @@ export function isThemeId(v: string): v is ThemeId {
   return v === 'dark' || v === 'mono' || v === 'zone' || v === 'totalcommander'
 }
 
-/** Reflect the active theme onto <html data-theme="…"> so the CSS overrides take effect. */
-export function applyThemeToDom(id: ThemeId): void {
-  document.documentElement.dataset.theme = id
+/** Resolve a theme id (built-in or custom) to the def the terminal + editor need. */
+export function resolveTheme(id: string, customs: CustomTheme[]): ThemeDef {
+  if (isThemeId(id)) return THEMES[id]
+  const c = customs.find((t) => t.id === id)
+  if (!c) return THEMES.dark
+  return { id: 'dark', label: c.label, description: c.description, xterm: c.xterm, monaco: c.id }
 }
+
+/**
+ * Reflect the active theme onto <html data-theme="…"> so the CSS overrides take effect. A
+ * custom theme stamps "custom" and injects its tokens as a <style> (see theme/custom.ts).
+ */
+export function applyThemeToDom(id: string, customs: CustomTheme[] = []): void {
+  if (isThemeId(id)) {
+    applyCustomThemeCss(null)
+    document.documentElement.dataset.theme = id
+    return
+  }
+  const c = customs.find((t) => t.id === id)
+  if (!c) {
+    applyCustomThemeCss(null)
+    document.documentElement.dataset.theme = 'dark'
+    return
+  }
+  applyCustomThemeCss(c)
+  document.documentElement.dataset.theme = CUSTOM_DOM_ID
+}
+
+export { isCustomThemeId }

@@ -27,6 +27,16 @@ import { detectProviders } from '@core/agents/providers'
 import { createHookServer, buildHooksSettings } from '@core/agents/hook-server'
 import { getSetting, setSetting, getAllPrefs, setProjectPref, applyPrefs } from '@core/persistence/repos'
 import { scanUsage } from '@core/usage/transcripts'
+import { listChanges, fileDiff } from '@core/git/changes'
+import {
+  createCheckpoint,
+  listCheckpoints,
+  dropCheckpoints,
+  pruneCheckpoints,
+  revertToCheckpoint
+} from '@core/git/snapshot'
+import { gitInfo, commit as gitCommit, push as gitPush, createPr, prStatus } from '@core/git/flow'
+import { generateMessages } from '@core/git/generate'
 import { readDir, readTextFile, writeTextFile } from '@core/fs/files'
 import {
   getBoard,
@@ -515,6 +525,101 @@ function registerIpc(): void {
   })
 
   ipcMain.handle(IPC.usageScan, () => scanUsage())
+
+  // ---- Changes tab: checkpoints, diffs, commit → push → PR (core/git) ----
+  ipcMain.handle(IPC.gitInfo, (_e, repo: string) => gitInfo(repo, shellEnv))
+  ipcMain.handle(IPC.gitChanges, (_e, { repo, base }: { repo: string; base: string }) =>
+    listChanges(repo, base, shellEnv)
+  )
+  ipcMain.handle(
+    IPC.gitFileDiff,
+    (_e, { repo, base, tree, file }: { repo: string; base: string; tree: string; file: { path: string; oldPath?: string; binary: boolean } }) =>
+      fileDiff(repo, base, tree, file, shellEnv)
+  )
+  ipcMain.handle(
+    IPC.gitCheckpoint,
+    (_e, { repo, terminalId, label }: { repo: string; terminalId: string; label: 'start' | 'turn' }) =>
+      createCheckpoint(repo, terminalId, label, shellEnv)
+  )
+  ipcMain.handle(IPC.gitCheckpoints, (_e, repo: string) => listCheckpoints(repo, shellEnv))
+  ipcMain.on(IPC.gitDropCheckpoints, (_e, { repo, terminalId }: { repo: string; terminalId: string }) => {
+    void dropCheckpoints(repo, terminalId, shellEnv)
+  })
+  ipcMain.handle(
+    IPC.gitPruneCheckpoints,
+    (_e, { repo, liveTerminalIds }: { repo: string; liveTerminalIds: string[] }) =>
+      pruneCheckpoints(repo, liveTerminalIds, shellEnv)
+  )
+  ipcMain.handle(IPC.gitRevert, async (_e, { repo, ref }: { repo: string; ref: string }) => {
+    const choice = win
+      ? dialog.showMessageBoxSync(win, {
+          type: 'warning',
+          buttons: ['Revert', 'Cancel'],
+          defaultId: 1,
+          cancelId: 1,
+          message: `Revert ${basename(repo)} to this checkpoint?`,
+          detail: 'Every change made since — by the agent or by you — is discarded from the working tree. Commits are kept.'
+        })
+      : 0
+    if (choice === 1) return { ok: false, error: 'cancelled' }
+    return revertToCheckpoint(repo, ref, shellEnv)
+  })
+  ipcMain.handle(
+    IPC.gitCommit,
+    (_e, { repo, message, paths }: { repo: string; message: string; paths: string[] | null }) =>
+      gitCommit(repo, message, paths, shellEnv)
+  )
+  ipcMain.handle(IPC.gitPush, (_e, repo: string) => gitPush(repo, shellEnv))
+  ipcMain.handle(
+    IPC.gitCreatePr,
+    (_e, { repo, ...opts }: { repo: string; title: string; body: string; draft: boolean; base?: string }) =>
+      createPr(repo, opts, shellEnv)
+  )
+  ipcMain.handle(IPC.gitPrStatus, (_e, { repo, branch }: { repo: string; branch?: string }) =>
+    prStatus(repo, shellEnv, branch)
+  )
+  ipcMain.handle(IPC.gitGenerate, async (_e, { repo, base, tree }: { repo: string; base: string; tree: string }) => {
+    const [c, info] = await Promise.all([composeEnv(['claude']), gitInfo(repo, shellEnv)])
+    return generateMessages(
+      repo,
+      base,
+      tree,
+      { claudeBin: c.resolved.claude ?? null, model: getSetting('generateModel', '') || undefined, branch: info.branch, defaultBranch: info.defaultBranch },
+      shellEnv
+    )
+  })
+
+  // ---- Custom themes: file dialogs (the parsing lives in the renderer) ----
+  ipcMain.handle(IPC.themeImportFile, async (): Promise<{ name: string; content: string } | null> => {
+    const opts: Electron.OpenDialogOptions = {
+      title: 'Import a VS Code or CmdrZone theme',
+      properties: ['openFile'],
+      filters: [{ name: 'Theme JSON', extensions: ['json', 'jsonc'] }]
+    }
+    const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
+    const file = res.filePaths[0]
+    if (res.canceled || !file) return null
+    try {
+      return { name: basename(file), content: readFileSync(file, 'utf8') }
+    } catch {
+      return null
+    }
+  })
+  ipcMain.handle(IPC.themeExportFile, async (_e, { name, content }: { name: string; content: string }): Promise<boolean> => {
+    const opts: Electron.SaveDialogOptions = {
+      title: 'Export theme',
+      defaultPath: join(app.getPath('downloads'), `${name.replace(/[^a-z0-9._-]+/gi, '-').toLowerCase() || 'theme'}.cmdrzone-theme.json`),
+      filters: [{ name: 'Theme JSON', extensions: ['json'] }]
+    }
+    const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts)
+    if (res.canceled || !res.filePath) return false
+    try {
+      writeFileSync(res.filePath, content, 'utf8')
+      return true
+    } catch {
+      return false
+    }
+  })
 
   ipcMain.handle(IPC.appGetVersion, () => app.getVersion())
   ipcMain.handle(IPC.updateCheck, () => checkForUpdates())
