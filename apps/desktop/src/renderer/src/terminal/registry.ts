@@ -111,6 +111,8 @@ export function initTerminalRouting(): void {
         break
       case 'Stop':
         patch.status = 'done'
+        // A finished turn = a checkpoint, so the Changes tab can diff turn by turn.
+        if (tab.cwd) void window.api.git.checkpoint(tab.cwd, tab.id, 'turn')
         break
       case 'SessionEnd':
         patch.status = 'idle'

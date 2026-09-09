@@ -20,6 +20,7 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
   const selected = useStore((s) => s.selectedProjectId === node.id)
   const terminals = useStore((s) => s.terminals)
   const git = useStore((s) => s.gitByPath[node.path])
+  const pr = useStore((s) => s.prByPath[node.path])
   const sum = summarizeProject(node.id, terminals)
   const st = STATUS_META[sum.status]
   const parent = flat ? node.parentPath?.split('/').pop() : undefined
@@ -39,6 +40,7 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
   if (sum.agentCount > 0) hint.push(`agent ${st.label.toLowerCase()}`)
   if (sum.termCount > 0) hint.push(`${sum.termCount} open terminal${sum.termCount > 1 ? 's' : ''}`)
   if (dirty > 0) hint.push(`${dirty} modified file${dirty > 1 ? 's' : ''}`)
+  if (pr) hint.push(`PR #${pr.number} ${pr.isDraft ? 'draft' : pr.state.toLowerCase()} — ${pr.title}`)
   if (!node.worktreeOf) hint.push('double-click name to rename')
 
   return (
@@ -79,6 +81,17 @@ function Row({ node, child, flat }: { node: ProjectNode; child?: boolean; flat?:
         </span>
       )}
       {!renaming && parent && <span className="tparent">{parent}</span>}
+      {!renaming && pr && (
+        <span
+          className={`tpr sm ${pr.state.toLowerCase()} ${pr.isDraft ? 'draft' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            window.api.shell.openExternal(pr.url)
+          }}
+        >
+          #{pr.number}
+        </span>
+      )}
       {!renaming && (
         <span className="tind">
           {sum.agentCount > 0 ? (

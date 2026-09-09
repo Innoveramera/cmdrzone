@@ -65,7 +65,26 @@ export const IPC = {
   /** pushed whenever the updater's state changes */
   updateState: 'update:state',
   /** Claude Code hook event for a terminal (authoritative agent status) */
-  agentHookEvent: 'agentHook:event'
+  agentHookEvent: 'agentHook:event',
+  // Changes tab: checkpoints, diffs, commit → push → PR (see core/git)
+  gitInfo: 'git:info',
+  gitChanges: 'git:changes',
+  gitFileDiff: 'git:fileDiff',
+  gitCheckpoint: 'git:checkpoint',
+  gitCheckpoints: 'git:checkpoints',
+  gitDropCheckpoints: 'git:dropCheckpoints',
+  gitPruneCheckpoints: 'git:pruneCheckpoints',
+  /** restore the working tree to a checkpoint (confirms first — discards work) */
+  gitRevert: 'git:revert',
+  gitCommit: 'git:commit',
+  gitPush: 'git:push',
+  gitCreatePr: 'git:createPr',
+  gitPrStatus: 'git:prStatus',
+  /** draft commit message + PR text from the diff via headless `claude -p` */
+  gitGenerate: 'git:generate',
+  // custom themes: pick + read a VS Code / CmdrZone theme file, save an export
+  themeImportFile: 'theme:importFile',
+  themeExportFile: 'theme:exportFile'
 } as const
 
 export interface PtyCreateOptions {

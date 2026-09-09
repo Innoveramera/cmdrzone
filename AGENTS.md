@@ -72,6 +72,24 @@ Run `pnpm typecheck && pnpm build` before considering a change done.
   the scanner never double-discovers them. Discovery derives from `git worktree list --porcelain`
   (`core/projects/worktrees.ts`), attached as project children in `scanAll()`. Only parse
   `--porcelain` output (localized git otherwise). Merge/remove confirm via native dialog in main.
+- **Changes tab = hidden-ref checkpoints (`core/git/`).** An agent tab's working tree is snapshotted
+  into `refs/cz/cp/<terminalId>/<seq>` on launch (`start`) and on every Claude `Stop` hook (`turn`)
+  via a scratch `GIT_INDEX_FILE` + `write-tree` + `commit-tree` — never `git add`/`commit` on the
+  user's index or branch, untracked files included, .gitignore respected. Diffs compare a base
+  (HEAD or a checkpoint) against a fresh snapshot tree, so untracked files show up. Refs are dropped
+  when a tab closes and pruned against live tab ids when the tab opens; **`pruneCheckpoints` must
+  receive every live terminal id** or durable sessions lose their history. `revertToCheckpoint`
+  discards work — always behind the native confirm in main. Commit message drafting shells out to
+  `claude -p --tools ""` (not `--bare`: that drops the stored login) with `CLAUDECODE` stripped from
+  the env. PRs go through `gh` (`gh auth login` once); no GitHub tokens are stored.
+- **Permission modes** are a per-project pref (`permissionMode`) turned into CLI flags in
+  `renderer/lib/agents.ts` (`permissionFlags`). Every agent launch path must go through
+  `providerLaunchOpts`/`permissionFlags` (tab strip, Resume, worktree, card launch) — flags go
+  before any positional prompt. Providers without an equivalent silently run supervised.
+- **Custom themes** are data, not CSS files: `renderer/theme/custom.ts` maps a VS Code theme (or
+  a canvas + accent pair) onto the CSS tokens, the xterm palette and a Monaco theme; applying one
+  stamps `data-theme="custom"` and injects a `<style>` with the tokens. Anything new in the UI must
+  therefore use the `--*` tokens, never hardcoded colors, or custom themes won't reach it.
 
 ## Architecture (keep the boundaries)
 

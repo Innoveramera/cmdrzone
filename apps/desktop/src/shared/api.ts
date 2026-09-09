@@ -27,6 +27,17 @@ import type {
 import type { DurableStatus } from './tmux'
 import type { UpdateState, ChangelogEntry } from './update'
 import type { UsageSnapshot } from './usage'
+import type {
+  ChangeSet,
+  ChangedFile,
+  Checkpoint,
+  CheckpointRevertResult,
+  FileDiff,
+  GeneratedMessages,
+  GitInfo,
+  GitOpResult,
+  PrInfo
+} from './git'
 
 export interface DesktopApi {
   pty: {
@@ -134,5 +145,38 @@ export interface DesktopApi {
   changelog: {
     /** parsed CHANGELOG.md entries, newest first */
     get(): Promise<ChangelogEntry[]>
+  }
+  git: {
+    /** branch / upstream / remote facts + whether `gh` is ready for pull requests */
+    info(repo: string): Promise<GitInfo>
+    /** files changed between `base` ('HEAD' = uncommitted; or a checkpoint sha/ref) and the working tree now */
+    changes(repo: string, base: string): Promise<ChangeSet>
+    /** both sides of one file from a listed ChangeSet (base + its snapshot tree) */
+    fileDiff(repo: string, base: string, tree: string, file: Pick<ChangedFile, 'path' | 'oldPath' | 'binary'>): Promise<FileDiff>
+    /** snapshot the working tree as a hidden ref for a terminal ('start' on launch, 'turn' after each Stop) */
+    checkpoint(repo: string, terminalId: string, label: 'start' | 'turn'): Promise<Checkpoint | null>
+    /** every checkpoint in the repo (all terminals), oldest first */
+    checkpoints(repo: string): Promise<Checkpoint[]>
+    /** delete a closed tab's checkpoints */
+    dropCheckpoints(repo: string, terminalId: string): void
+    /** delete checkpoints whose terminal is no longer open */
+    pruneCheckpoints(repo: string, liveTerminalIds: string[]): Promise<number>
+    /** restore the working tree to a checkpoint (native confirm first) */
+    revert(repo: string, ref: string): Promise<CheckpointRevertResult>
+    /** stage (all, or `paths`) + commit; value = short sha */
+    commit(repo: string, message: string, paths: string[] | null): Promise<GitOpResult>
+    push(repo: string): Promise<GitOpResult>
+    /** `gh pr create`; value = PR url */
+    createPr(repo: string, opts: { title: string; body: string; draft: boolean; base?: string }): Promise<GitOpResult>
+    /** the branch's PR on GitHub, or null */
+    prStatus(repo: string, branch?: string): Promise<PrInfo | null>
+    /** draft commit + PR text for the diff base→tree with headless Claude */
+    generate(repo: string, base: string, tree: string): Promise<GeneratedMessages>
+  }
+  theme: {
+    /** open a file picker for a theme JSON; resolves { name, content } or null if cancelled */
+    importFile(): Promise<{ name: string; content: string } | null>
+    /** save dialog for an exported theme; resolves true when written */
+    exportFile(name: string, content: string): Promise<boolean>
   }
 }

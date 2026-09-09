@@ -8,6 +8,39 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.10.0] - 2026-09-09
+
+### Added
+
+- **Changes tab — see what the agent did.** A new ⎇ Changes tab per project (and per
+  worktree) lists changed files with +/− counts and shows each one in a side-by-side or unified
+  Monaco diff. Pick the scope: *uncommitted changes*, *since Claude started*, or *after turn N* —
+  CmdrZone snapshots the working tree into hidden git refs (`refs/cz/cp/<tab>/<n>`, untracked
+  files included, your branch and index untouched) when an agent session starts and after every
+  finished turn. **Revert to this checkpoint** puts the working tree back to that moment.
+- **Commit → push → PR in one click.** Tick the files to include, write a message — or press
+  **✨ Draft with Claude** and a headless `claude -p` run drafts the commit subject/body and the
+  PR title/body from the diff, matching the repo's recent commit style and AGENTS.md. Then
+  **Commit**, **Commit & push**, or **Commit, push & PR** (via GitHub CLI, draft optional). The
+  branch's pull request shows as a badge in the sidebar, the worktree banner and the Changes
+  header — open / draft / merged / closed.
+- **Import VS Code themes.** ⚙ Settings → *Import VS Code theme…* takes any `*-color-theme.json`
+  (JSONC fine) and maps its colors onto the app, the terminal's 16 ANSI colors and the code
+  editor's syntax highlighting. *Create from colors* builds a whole theme from a canvas + accent
+  pair; your themes can be exported as JSON and imported again.
+- **Permission modes on the launch tab.** A picker in the Terminals tab strip — *Supervised*,
+  *Auto-accept edits*, *Plan*, *Full access* — remembered per project and applied to every agent
+  you start there (new tab, Resume, worktree, launch-from-card). Mapped onto each CLI's own flags
+  (Claude Code `--permission-mode` / `--dangerously-skip-permissions`, Codex `--full-auto` /
+  bypass, Gemini `--approval-mode` / `--yolo`, Aider `--yes-always`); the tab shows a mode badge.
+
+### Changed
+
+- **Tab strip decluttered.** The separate *Worktree* and *Resume Claude* buttons are gone; each
+  agent button is now a split button whose ▾ menu offers *Start here*, *Start in a new
+  worktree…* and, for Claude Code, *Resume last conversation*. The worktree popover no longer
+  asks which agent — you already chose.
+
 ## [0.9.0] - 2026-09-09
 
 ### Added

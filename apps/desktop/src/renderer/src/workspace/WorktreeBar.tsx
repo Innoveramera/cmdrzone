@@ -10,6 +10,7 @@ import { useStore } from '../state/store'
 // Confirmation happens in the main process (native dialog); errors surface inline here.
 export function WorktreeBar({ project }: { project: ProjectNode }) {
   const parent = useStore((s) => s.findProject(project.worktreeOf ?? null))
+  const pr = useStore((s) => s.prByPath[project.path])
   const [busy, setBusy] = useState<'merge' | 'remove' | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
@@ -30,6 +31,15 @@ export function WorktreeBar({ project }: { project: ProjectNode }) {
         ⎇ {project.branch ?? project.name}
       </span>
       <span className="muted small">worktree of {parent?.name ?? '…'}</span>
+      {pr && (
+        <button
+          className={`tpr ${pr.state.toLowerCase()} ${pr.isDraft ? 'draft' : ''}`}
+          title={`${pr.title}\n${pr.url}`}
+          onClick={() => window.api.shell.openExternal(pr.url)}
+        >
+          PR #{pr.number}{pr.state !== 'OPEN' ? ` · ${pr.state.toLowerCase()}` : pr.isDraft ? ' · draft' : ''}
+        </button>
+      )}
       {err && <span className="err wt-err" title={err}>{err}</span>}
       <span className="spacer" />
       <button className="ghost" disabled={!!busy} onClick={() => void run('merge')}>

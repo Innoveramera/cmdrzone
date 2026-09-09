@@ -113,6 +113,26 @@ const api: DesktopApi = {
   },
   changelog: {
     get: () => ipcRenderer.invoke(IPC.changelogGet)
+  },
+  git: {
+    info: (repo) => ipcRenderer.invoke(IPC.gitInfo, repo),
+    changes: (repo, base) => ipcRenderer.invoke(IPC.gitChanges, { repo, base }),
+    fileDiff: (repo, base, tree, file) => ipcRenderer.invoke(IPC.gitFileDiff, { repo, base, tree, file }),
+    checkpoint: (repo, terminalId, label) => ipcRenderer.invoke(IPC.gitCheckpoint, { repo, terminalId, label }),
+    checkpoints: (repo) => ipcRenderer.invoke(IPC.gitCheckpoints, repo),
+    dropCheckpoints: (repo, terminalId) => ipcRenderer.send(IPC.gitDropCheckpoints, { repo, terminalId }),
+    pruneCheckpoints: (repo, liveTerminalIds) =>
+      ipcRenderer.invoke(IPC.gitPruneCheckpoints, { repo, liveTerminalIds }),
+    revert: (repo, ref) => ipcRenderer.invoke(IPC.gitRevert, { repo, ref }),
+    commit: (repo, message, paths) => ipcRenderer.invoke(IPC.gitCommit, { repo, message, paths }),
+    push: (repo) => ipcRenderer.invoke(IPC.gitPush, repo),
+    createPr: (repo, opts) => ipcRenderer.invoke(IPC.gitCreatePr, { repo, ...opts }),
+    prStatus: (repo, branch) => ipcRenderer.invoke(IPC.gitPrStatus, { repo, branch }),
+    generate: (repo, base, tree) => ipcRenderer.invoke(IPC.gitGenerate, { repo, base, tree })
+  },
+  theme: {
+    importFile: () => ipcRenderer.invoke(IPC.themeImportFile),
+    exportFile: (name, content) => ipcRenderer.invoke(IPC.themeExportFile, { name, content })
   }
 }
 

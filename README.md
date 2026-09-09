@@ -29,8 +29,17 @@ drive them all.
   Double-click a project name to **rename its folder** on disk (confirmed; board + prefs follow).
 - **Embedded agent terminals** — each installed agent (Claude Code / Aider / Codex / Gemini /
   opencode) has its own launch tab in every project. Run different agents side by side in real
-  PTYs with your full login-shell PATH, with no project setting to change. Resume the last Claude
-  conversation in one click (`claude --continue`), or choose an agent for an isolated worktree.
+  PTYs with your full login-shell PATH, with no project setting to change. Each agent button has a
+  ▾ menu: start here, start in an isolated git worktree, or (Claude) resume the last conversation.
+  Pick a **permission mode** per project (Supervised / Auto-accept edits / Plan / Full access) and
+  every launch there gets the matching CLI flags.
+- **Changes — see what the agent did** — a per-project diff tab: changed files with +/− counts and
+  a Monaco side-by-side/unified diff, scoped to *uncommitted*, *since the agent started* or *after
+  turn N*. Sessions are checkpointed into hidden git refs (untracked files included, your branch
+  untouched), so you can also **revert to a checkpoint**.
+- **Commit → push → PR in one click** — tick the files, let **Draft with Claude** write the commit
+  message and PR text from the diff (headless `claude -p`, mirrors your repo's commit style), then
+  Commit / Commit & push / Commit, push & PR (GitHub CLI). PR state shows as a badge on the branch.
 - **Code editor** — a Files + **Monaco** (VS Code's editor) tab with multi-file tabs, IntelliSense,
   minimap, and save.
 - **Board** — a per-project Trello-style Kanban (Ideas 💡 / Features ✨ / Bugs 🐞 / Tasks) with
@@ -51,6 +60,8 @@ drive them all.
   agent running (also `⌘⌥→` / `⌘⌥←`), `⌘0` dashboard, `⌘1–9` pinned projects, `⌘T` new
   terminal, `⌘D` / `⌘⇧D` split pane.
 - **Split terminals** — split any tab into panes (row/col); each pane is its own live PTY.
+- **Themes, yours too** — Dark, Mono, Zone, Total Commander, plus **import any VS Code theme**
+  (app + terminal ANSI palette + editor syntax) or create one from a canvas + accent color.
 - **Model-agnostic, Claude-first** — agents are just launch recipes; add your own.
 
 ## Stack

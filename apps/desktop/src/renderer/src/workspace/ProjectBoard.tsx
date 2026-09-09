@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ProjectNode, BoardCard, BoardColumn, CardType, CardAttachment } from '@shared/types'
 import { useStore } from '../state/store'
 import { composePrompt } from '../lib/prompt'
+import { permissionFlags } from '../lib/agents'
 import { dueInfo, dueToInput, dueFromInput } from '../lib/format'
 import { imageFilesFrom, isImageFile, attachImageToCard } from '../lib/images'
 
@@ -177,11 +178,13 @@ export function ProjectBoard({ project }: { project: ProjectNode }) {
   const launch = (card: BoardCard, promptText: string) => {
     if (!claude?.installed || !claude.path) return
     useStore.getState().setDetailMode('terminals')
+    const flags = permissionFlags('claude-code', project.permissionMode)
     useStore.getState().newTerminal(project.id, {
       kind: 'agent',
       providerId: 'claude-code',
       title: card.title.slice(0, 24) || 'Claude',
-      spawn: { command: claude.path, args: [promptText] }
+      spawn: { command: claude.path, args: [...flags, promptText] },
+      permissionMode: flags.length ? project.permissionMode : undefined
     })
     const ip = columns.find((c) => c.title.trim().toLowerCase() === 'in progress')
     if (ip && card.columnId !== ip.id) moveCard(card.id, ip.id)
