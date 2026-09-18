@@ -111,10 +111,64 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
     // descendant), and redefining `altKey` routes the click through xterm's force-selection path —
     // the exact code Option-drag already uses, which also suppresses the mouse report. Plain shells
     // (no mouse tracking) are left completely untouched and keep native selection/click behavior.
+    //
+    // A plain *click* must still reach the program though — TUIs have clickable chrome (Claude
+    // Code's side-panel ×, "Jump to bottom") that is otherwise impossible to hit. xterm picks
+    // select-vs-report on mousedown, before we know which it is, so a single press is held back and
+    // replayed once it resolves: moved past DRAG_PX → replay as a forced selection; released in
+    // place → replay untouched, so the program gets the click. Multi-clicks (word/line select) keep
+    // forcing selection right away.
+    const DRAG_PX = 4
+    let held: MouseEvent | null = null
+    let replaying = false
+    const replay = (src: MouseEvent, forceSelect: boolean): void => {
+      replaying = true
+      try {
+        src.target?.dispatchEvent(
+          new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            detail: src.detail,
+            clientX: src.clientX,
+            clientY: src.clientY,
+            screenX: src.screenX,
+            screenY: src.screenY,
+            button: 0,
+            buttons: 1,
+            altKey: forceSelect
+          })
+        )
+      } finally {
+        replaying = false
+      }
+    }
+    const resolveHeld = (e: MouseEvent): void => {
+      if (!held) return
+      const isUp = e.type === 'mouseup'
+      if (!isUp && Math.hypot(e.clientX - held.clientX, e.clientY - held.clientY) < DRAG_PX) return
+      const src = held
+      held = null
+      window.removeEventListener('mousemove', resolveHeld, true)
+      window.removeEventListener('mouseup', resolveHeld, true)
+      // Runs in the capture phase, so xterm's document-level move/up listeners (registered by the
+      // replayed mousedown) still see this very event afterwards.
+      replay(src, !isUp)
+    }
     const forceSelectOnDrag = (e: MouseEvent): void => {
+      if (replaying) return
       if (e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return
       if (term.modes.mouseTrackingMode === 'none') return
-      Object.defineProperty(e, 'altKey', { configurable: true, get: () => true })
+      if (e.detail > 1) {
+        Object.defineProperty(e, 'altKey', { configurable: true, get: () => true })
+        return
+      }
+      e.stopPropagation()
+      e.preventDefault()
+      term.focus()
+      held = e
+      window.addEventListener('mousemove', resolveHeld, true)
+      window.addEventListener('mouseup', resolveHeld, true)
     }
     host.addEventListener('mousedown', forceSelectOnDrag, true)
 
@@ -165,6 +219,8 @@ export function XTermView({ id, active }: { id: string; active: boolean }) {
     return () => {
       ro.disconnect()
       host.removeEventListener('mousedown', forceSelectOnDrag, true)
+      window.removeEventListener('mousemove', resolveHeld, true)
+      window.removeEventListener('mouseup', resolveHeld, true)
       unregisterTerm(id)
       window.api.pty.dispose(id)
       term.dispose()

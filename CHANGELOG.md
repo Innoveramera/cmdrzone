@@ -8,6 +8,15 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.10.2] - 2026-09-18
+
+### Fixed
+
+- Clicks never reached programs running in a terminal, so clickable TUI chrome — Claude Code's
+  side-panel **×**, "Jump to bottom" — could not be used (a diff panel you couldn't close). The
+  drag-to-select helper claimed every mouse press for text selection; it now waits to see whether
+  you drag (select, as before) or just click (passed on to the program).
+
 ## [0.10.1] - 2026-09-09
 
 ### Fixed
