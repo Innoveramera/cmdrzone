@@ -8,6 +8,25 @@ The app reads this file at runtime: each `## [version]` section becomes an entry
 in-app **What's New** dialog, and the section matching the running build is shown automatically
 the first time that version launches.
 
+## [0.11.0] - 2026-10-14
+
+### Added
+
+- **Light themes.** Two new built-in themes in Settings: **Daylight** (crisp white panels on a
+  cool gray ground, blue accent) and **Paper** (warm off-white, ink-dark type, terracotta accent),
+  each with a terminal palette and editor colors made for a light background.
+- **Set every color yourself.** "Create from colors" is now a full theme editor: canvas + accent
+  still derive the palette, and under **All colors** each of the 27 colors (surfaces, text,
+  borders, status, charts) can be set by hand or reset. The whole app previews the draft live
+  while you edit, and Cancel restores your theme. Your own themes get a **✎** button to re-color
+  them later.
+
+### Fixed
+
+- The Settings dialog couldn't scroll, so the theme color form was cut off at the bottom.
+- Status pills, board cards, badges and code snippets used hardcoded dark colors that looked
+  wrong in light themes (including your own); they now follow the active theme.
+
 ## [0.10.2] - 2026-09-18
 
 ### Fixed
