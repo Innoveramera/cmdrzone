@@ -254,13 +254,14 @@ html[data-theme="totalcommander"] .fkbar {
 .fkey:disabled { opacity: 0.45; cursor: default; }
 
 /* ---------- Settings dialog (theme picker) ---------- */
-.settings { width: 440px; max-width: 92vw; }
+.settings { width: 480px; max-width: 92vw; max-height: calc(86vh - 24px); }
 .settings-head {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
 .settings-title { font-weight: 700; font-size: 15px; }
-.settings-body { padding: 14px 16px 16px; }
+/* .wn clips its overflow — the body must scroll on its own or the color editor gets cut off */
+.settings-body { padding: 14px 16px 16px; flex: 1; min-height: 0; overflow-y: auto; }
 .settings-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
   color: var(--muted); margin-bottom: 8px;

@@ -1,0 +1,91 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Copyright (C) 2026 Fredrik Hammarström */
+
+/* ============================================================================
+   Light themes — palette only. Everything in styles.css reads the --* tokens,
+   so a light ground just needs a full token set (plus color-scheme, so native
+   scrollbars, selects and color pickers follow). The terminal + editor sides
+   live in themes.ts / CodeEditor.tsx.
+
+   Daylight — cool white panels on a pale gray-blue ground, a clear blue accent.
+   Paper    — warm off-white like a printed page, ink text, terracotta accent.
+   ========================================================================== */
+
+html[data-theme="daylight"] {
+  color-scheme: light;
+  --bg: #eef0f4;
+  --panel: #ffffff;
+  --panel2: #f8f9fb;
+  --border: #dfe3ea;
+  --border2: #cbd1db;
+  --text: #1d2330;
+  --muted: #5f6878;
+  --accent: #2f6fdf;
+  --blue: #1f66cc;
+  --amber: #9a6200;
+  --green: #17804f;
+  --red: #c93434;
+  --hover: #eef1f6;
+  --elev: #f4f6f9;
+  --sel: #e1eafb;
+  --sel-strong: #d0ddf8;
+  --chip-bg: #eaedf2;
+  --badge-bg: #eceff3;
+  --dim: #b0b7c3;
+  --viz-1: #2a78d6;
+  --viz-2: #1a9c6c;
+  --viz-3: #d08f00;
+  --viz-4: #6b5bd2;
+  --viz-other: #b4bac5;
+  --viz-seq: #2a78d6;
+  --holo-1: #0d93cf;
+  --holo-2: #7a58e0;
+}
+
+html[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #ece7dd;
+  --panel: #f8f5ee;
+  --panel2: #fbf9f4;
+  --border: #ddd5c6;
+  --border2: #cbc0ad;
+  --text: #2a2620;
+  --muted: #74695a;
+  --accent: #b0502a;
+  --blue: #2f5f9e;
+  --amber: #946200;
+  --green: #3b7536;
+  --red: #b3302a;
+  --hover: #f0ebe1;
+  --elev: #f4f0e8;
+  --sel: #f1dfd1;
+  --sel-strong: #eacfbd;
+  --chip-bg: #ebe5d9;
+  --badge-bg: #ede8dd;
+  --dim: #bcb19f;
+  --viz-1: #2f5f9e;
+  --viz-2: #3d8a5a;
+  --viz-3: #c38200;
+  --viz-4: #7a5aa6;
+  --viz-other: #c3baab;
+  --viz-seq: #b0502a;
+  --holo-1: #c0643a;
+  --holo-2: #8a5a9e;
+}
+
+/* The dark theme's corner glow, on paper: same two radial washes, tinted by the tokens. */
+html:is([data-theme="daylight"], [data-theme="paper"]) .home-hero {
+  background:
+    radial-gradient(120% 190% at 86% -50%, color-mix(in srgb, var(--holo-1) 10%, transparent), transparent 55%),
+    radial-gradient(90% 160% at 8% 140%, color-mix(in srgb, var(--holo-2) 8%, transparent), transparent 60%),
+    var(--panel);
+  border-color: var(--border2);
+}
+
+/* Dialogs float on a lighter scrim and cast softer shadows than on a dark ground. */
+html:is([data-theme="daylight"], [data-theme="paper"]) :is(.palette-overlay, .modal-overlay) {
+  background: rgba(20, 24, 32, 0.22);
+}
+html:is([data-theme="daylight"], [data-theme="paper"]) :is(.palette, .modal, .wn) {
+  box-shadow: 0 18px 50px rgba(20, 24, 32, 0.18), 0 2px 6px rgba(20, 24, 32, 0.08);
+}

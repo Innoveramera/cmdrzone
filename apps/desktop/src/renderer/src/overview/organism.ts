@@ -27,6 +27,8 @@ export interface Palette {
   green: RGB
   muted: RGB
   text: RGB
+  /** light ground — additive "lighter" blending would wash out to white, so paint normally */
+  light?: boolean
 }
 
 export interface AgentSnapshot {
@@ -696,7 +698,8 @@ export class Organism {
   /** `dim` is a global brightness multiplier (night mode). */
   draw(ctx: CanvasRenderingContext2D, w: number, h: number, dim = 1): void {
     ctx.clearRect(0, 0, w, h)
-    ctx.globalCompositeOperation = 'lighter'
+    const blend: GlobalCompositeOperation = this.pal.light ? 'source-over' : 'lighter'
+    ctx.globalCompositeOperation = blend
     const s = this.scale()
     const pal = this.pal
 
@@ -803,7 +806,7 @@ export class Organism {
         ctx.beginPath()
         ctx.arc(n.x + n.gazeX * cr * 0.45, n.y + n.gazeY * cr * 0.45, pr, 0, TAU)
         ctx.fill()
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = blend
       }
     }
 
@@ -853,6 +856,9 @@ function parseColor(v: string, fallback: RGB): RGB {
   return fallback
 }
 
+// perceived lightness, 0..1 — enough to tell a light ground from a dark one
+const lum = ([r, g, b]: RGB): number => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+
 /** Read the active theme's tokens off <html> so the organism re-skins with the app. */
 export function readPalette(): Palette {
   const cs = getComputedStyle(document.documentElement)
@@ -864,6 +870,7 @@ export function readPalette(): Palette {
     red: get('--red', [255, 107, 107]),
     green: get('--green', [87, 217, 163]),
     muted: get('--muted', [124, 133, 151]),
-    text: get('--text', [215, 220, 229])
+    text: get('--text', [215, 220, 229]),
+    light: lum(get('--bg', [11, 13, 18])) > 0.5
   }
 }

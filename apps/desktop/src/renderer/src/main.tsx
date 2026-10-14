@@ -7,6 +7,7 @@ import './styles.css'
 import './theme/monochrome.css'
 import './theme/zone.css'
 import './theme/totalcommander.css'
+import './theme/light.css'
 
 // No StrictMode: its double-mount in dev would spawn (then dispose) a duplicate PTY per terminal.
 createRoot(document.getElementById('root')!).render(<App />)

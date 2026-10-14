@@ -3,13 +3,13 @@
 
 // Theme registry. The CSS palette lives in styles.css (default, dark) with
 // per-theme overrides in theme/monochrome.css, theme/zone.css and
-// theme/totalcommander.css (each scoped under html[data-theme="<id>"]).
+// theme/totalcommander.css, theme/light.css (each scoped under html[data-theme="<id>"]).
 // This module owns the bits CSS can't reach: the xterm + Monaco theming, the
 // catalog the Settings picker renders, and applying the data-theme attribute.
 
 import { type CustomTheme, CUSTOM_DOM_ID, applyCustomThemeCss, isCustomThemeId } from './custom'
 
-export type ThemeId = 'dark' | 'mono' | 'zone' | 'totalcommander'
+export type ThemeId = 'dark' | 'mono' | 'zone' | 'totalcommander' | 'daylight' | 'paper'
 
 /** Minimal xterm theme — xterm merges this over its defaults, so a few keys suffice.
     The ANSI slots are optional: Zone remaps all 16 onto a gray ramp; other themes
@@ -119,13 +119,79 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
       selectionBackground: '#000080'
     },
     monaco: 'vs'
+  },
+  daylight: {
+    id: 'daylight',
+    label: 'Daylight',
+    description: 'Light — crisp white panels on a cool gray ground, blue accent. For bright rooms.',
+    // Full ANSI set: xterm's stock yellow/white are unreadable on a white field.
+    xterm: {
+      background: '#f8f9fb',
+      foreground: '#1d2330',
+      cursor: '#2f6fdf',
+      cursorAccent: '#f8f9fb',
+      selectionBackground: '#cfdcf7',
+      black: '#24292f',
+      red: '#c62a2a',
+      green: '#16723f',
+      yellow: '#7d5200',
+      blue: '#0a63d1',
+      magenta: '#8146d6',
+      cyan: '#147680',
+      white: '#6e7781',
+      brightBlack: '#57606a',
+      brightRed: '#a40e26',
+      brightGreen: '#1a7f37',
+      brightYellow: '#946200',
+      brightBlue: '#2f7fe6',
+      brightMagenta: '#9a62ea',
+      brightCyan: '#2a8c99',
+      brightWhite: '#8c959f'
+    },
+    monaco: 'daylight'
+  },
+  paper: {
+    id: 'paper',
+    label: 'Paper',
+    description: 'Light — warm off-white like a printed page, ink-dark type, terracotta accent.',
+    xterm: {
+      background: '#fbf9f4',
+      foreground: '#2a2620',
+      cursor: '#b0502a',
+      cursorAccent: '#fbf9f4',
+      selectionBackground: '#ecdac9',
+      black: '#2a2620',
+      red: '#b3302a',
+      green: '#4a7526',
+      yellow: '#865c00',
+      blue: '#2f5f9e',
+      magenta: '#8c4686',
+      cyan: '#277570',
+      white: '#857a6b',
+      brightBlack: '#655b4e',
+      brightRed: '#cc4530',
+      brightGreen: '#5c8a30',
+      brightYellow: '#a06f00',
+      brightBlue: '#3d74bd',
+      brightMagenta: '#a1579b',
+      brightCyan: '#358c86',
+      brightWhite: '#a0957f'
+    },
+    monaco: 'paper'
   }
 }
 
-export const THEME_LIST: ThemeDef[] = [THEMES.dark, THEMES.mono, THEMES.zone, THEMES.totalcommander]
+export const THEME_LIST: ThemeDef[] = [
+  THEMES.dark,
+  THEMES.mono,
+  THEMES.zone,
+  THEMES.daylight,
+  THEMES.paper,
+  THEMES.totalcommander
+]
 
 export function isThemeId(v: string): v is ThemeId {
-  return v === 'dark' || v === 'mono' || v === 'zone' || v === 'totalcommander'
+  return Object.prototype.hasOwnProperty.call(THEMES, v)
 }
 
 /** Resolve a theme id (built-in or custom) to the def the terminal + editor need. */

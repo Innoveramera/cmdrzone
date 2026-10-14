@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
 import { THEME_LIST } from '../theme/themes'
 import type { CustomTheme } from '../theme/custom'
+import { ThemeEditor } from './ThemeEditor'
 
 export function Settings() {
   const open = useStore((s) => s.settingsOpen)
@@ -12,12 +13,8 @@ export function Settings() {
   const customThemes = useStore((s) => s.customThemes)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  // "Create from colors" mini-form (t3-style short format: canvas + accent → everything else).
-  const [creating, setCreating] = useState(false)
-  const [name, setName] = useState('')
-  const [appearance, setAppearance] = useState<'dark' | 'light'>('dark')
-  const [canvas, setCanvas] = useState('#1a1b26')
-  const [accent, setAccent] = useState('#7aa2f7')
+  // Color editor: 'new', or the custom theme being re-colored.
+  const [editing, setEditing] = useState<'new' | CustomTheme | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -36,12 +33,6 @@ export function Settings() {
     const e = await useStore.getState().importTheme()
     setBusy(false)
     if (e) setErr(e)
-  }
-
-  const create = (): void => {
-    useStore.getState().createPaletteTheme(name, appearance, canvas, accent)
-    setCreating(false)
-    setName('')
   }
 
   const swatch = (t: CustomTheme): [string, string, string] => [t.xterm.background, t.xterm.foreground, t.vars['--accent'] ?? t.xterm.cursor]
@@ -98,6 +89,16 @@ export function Settings() {
                   <span className="spacer" />
                   <span
                     className="theme-act"
+                    title="Edit colors"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditing(t)
+                    }}
+                  >
+                    ✎
+                  </span>
+                  <span
+                    className="theme-act"
                     title="Export as JSON"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -126,7 +127,7 @@ export function Settings() {
             <button className="ghost" disabled={busy} onClick={() => void importTheme()} title="Import a VS Code color theme (.json) or a CmdrZone theme export">
               {busy ? 'Importing…' : '⇪ Import VS Code theme…'}
             </button>
-            <button className={`ghost ${creating ? 'on' : ''}`} onClick={() => setCreating((c) => !c)}>
+            <button className={`ghost ${editing === 'new' ? 'on' : ''}`} onClick={() => setEditing((e) => (e === 'new' ? null : 'new'))}>
               ✎ Create from colors
             </button>
           </div>
@@ -136,43 +137,12 @@ export function Settings() {
             the app, the terminal palette and the editor's syntax highlighting.
           </div>
 
-          {creating && (
-            <div className="theme-create">
-              <input
-                className="select"
-                autoFocus
-                placeholder="Theme name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') create()
-                }}
-              />
-              <label className="theme-create-row">
-                <span>Canvas</span>
-                <input type="color" value={canvas} onChange={(e) => setCanvas(e.target.value)} />
-                <code>{canvas}</code>
-              </label>
-              <label className="theme-create-row">
-                <span>Accent</span>
-                <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} />
-                <code>{accent}</code>
-              </label>
-              <label className="theme-create-row">
-                <span>Appearance</span>
-                <select className="select" value={appearance} onChange={(e) => setAppearance(e.target.value as 'dark' | 'light')}>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
-              </label>
-              <div className="theme-create-preview" style={{ background: canvas, borderColor: accent }}>
-                <span style={{ color: accent }}>Aa</span> preview
-              </div>
-              <div className="modal-actions">
-                <button className="primary" onClick={create}>Create & apply</button>
-                <button className="ghost" onClick={() => setCreating(false)}>Cancel</button>
-              </div>
-            </div>
+          {editing && (
+            <ThemeEditor
+              key={editing === 'new' ? 'new' : editing.id}
+              initial={editing === 'new' ? undefined : editing}
+              onDone={() => setEditing(null)}
+            />
           )}
         </div>
       </div>

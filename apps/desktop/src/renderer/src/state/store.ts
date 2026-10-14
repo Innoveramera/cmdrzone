@@ -14,12 +14,23 @@ import {
   importThemeFile,
   exportThemeFile,
   themeFromPalette,
+  rebuildTheme,
   parseCustomThemes,
   serializeCustomThemes
 } from '../theme/custom'
 import { statusRank } from '../lib/format'
 import { agentLaunchOpts, providerLaunchOpts, resolveProvider } from '../lib/agents'
 import { composeNewProjectPrompt } from '../lib/prompt'
+
+/** what the theme color editor in Settings hands the store */
+export interface ColorThemeDraft {
+  name: string
+  appearance: 'dark' | 'light'
+  canvas: string
+  accent: string
+  /** per-token overrides, e.g. { '--panel': '#1f2230' } */
+  colors: Record<string, string>
+}
 
 export type AgentStatus = 'idle' | 'working' | 'waiting' | 'done' | 'error'
 export type TerminalKind = 'agent' | 'shell' | 'devserver'
@@ -202,8 +213,9 @@ interface Store {
   setTheme: (t: string) => void
   /** pick a VS Code / CmdrZone theme file, add it, and switch to it; error string or null */
   importTheme: () => Promise<string | null>
-  /** build a theme from canvas + accent colors, add it, and switch to it */
-  createPaletteTheme: (name: string, appearance: 'dark' | 'light', canvas: string, accent: string) => void
+  /** build a theme from canvas + accent (+ per-token overrides) and switch to it; with `id`,
+      re-color that existing custom theme in place */
+  saveColorTheme: (opts: ColorThemeDraft & { id?: string }) => void
   deleteCustomTheme: (id: string) => void
   exportCustomTheme: (id: string) => Promise<void>
   /** look up the GitHub PR for a repo/worktree path (cached in prByPath) */
@@ -686,8 +698,17 @@ export const useStore = create<Store>((set, get) => ({
     return null
   },
 
-  createPaletteTheme: (name, appearance, canvas, accent) => {
-    addCustomTheme(set, get, themeFromPalette({ name, appearance, canvas, accent }))
+  saveColorTheme: ({ id, ...draft }) => {
+    const prev = id ? get().customThemes.find((t) => t.id === id) : undefined
+    if (!prev) {
+      addCustomTheme(set, get, themeFromPalette(draft))
+      return
+    }
+    const next = rebuildTheme(prev, draft)
+    const customThemes = get().customThemes.map((t) => (t.id === id ? next : t))
+    set({ customThemes })
+    void window.api.settings.set(CUSTOM_THEMES_KEY, serializeCustomThemes(customThemes))
+    get().setTheme(next.id)
   },
 
   deleteCustomTheme: (id) => {

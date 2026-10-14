@@ -112,12 +112,47 @@ export function isCustomThemeId(id: string): boolean {
 
 // ---------- token derivation ----------
 
-const TOKEN_KEYS = [
+export const TOKEN_KEYS = [
   '--bg', '--panel', '--panel2', '--border', '--border2', '--text', '--muted', '--accent',
   '--blue', '--amber', '--green', '--red', '--hover', '--elev', '--sel', '--sel-strong',
   '--chip-bg', '--badge-bg', '--dim', '--viz-1', '--viz-2', '--viz-3', '--viz-4',
   '--viz-other', '--viz-seq', '--holo-1', '--holo-2'
 ] as const
+
+export type TokenKey = (typeof TOKEN_KEYS)[number]
+
+/** Every token, grouped and labeled for the color editor in Settings. */
+export const TOKEN_GROUPS: { label: string; tokens: [TokenKey, string][] }[] = [
+  {
+    label: 'Surfaces',
+    tokens: [
+      ['--bg', 'Background'], ['--panel', 'Panels'], ['--panel2', 'Wells (editor, terminal)'],
+      ['--elev', 'Raised'], ['--hover', 'Hover'], ['--sel', 'Selection'], ['--sel-strong', 'Selection, pressed'],
+      ['--chip-bg', 'Chips'], ['--badge-bg', 'Badges']
+    ]
+  },
+  {
+    label: 'Text & lines',
+    tokens: [
+      ['--text', 'Text'], ['--muted', 'Muted text'], ['--dim', 'Dimmed glyphs'],
+      ['--border', 'Borders'], ['--border2', 'Borders, strong']
+    ]
+  },
+  {
+    label: 'Accent & status',
+    tokens: [
+      ['--accent', 'Accent'], ['--blue', 'Links · working'], ['--amber', 'Warning · waiting'],
+      ['--green', 'Success · done'], ['--red', 'Error']
+    ]
+  },
+  {
+    label: 'Charts & home',
+    tokens: [
+      ['--viz-1', 'Chart 1'], ['--viz-2', 'Chart 2'], ['--viz-3', 'Chart 3'], ['--viz-4', 'Chart 4'],
+      ['--viz-other', 'Chart, other'], ['--viz-seq', 'Chart bars'], ['--holo-1', 'Glow 1'], ['--holo-2', 'Glow 2']
+    ]
+  }
+]
 
 /**
  * Derive the full token set from a canvas + accent (+ optional overrides). Every token has
@@ -127,7 +162,7 @@ export function deriveTokens(
   canvasHex: string,
   accentHex: string,
   appearance: 'dark' | 'light',
-  overrides: Partial<Record<(typeof TOKEN_KEYS)[number], string>> = {}
+  overrides: Partial<Record<TokenKey, string>> = {}
 ): Record<string, string> {
   const canvas = parseHex(canvasHex) ?? (appearance === 'dark' ? [11, 13, 18] : [250, 250, 250])
   const accent = parseHex(accentHex) ?? (appearance === 'dark' ? [155, 180, 255] : [40, 90, 220])
@@ -209,7 +244,7 @@ export function themeFromPalette(opts: {
   accent: string
   colors?: Record<string, string>
 }): CustomTheme {
-  const vars = deriveTokens(opts.canvas, opts.accent, opts.appearance, (opts.colors ?? {}) as Partial<Record<(typeof TOKEN_KEYS)[number], string>>)
+  const vars = deriveTokens(opts.canvas, opts.accent, opts.appearance, (opts.colors ?? {}) as Partial<Record<TokenKey, string>>)
   return {
     id: `custom-${Date.now()}`,
     label: opts.name.trim() || 'Custom',
@@ -218,6 +253,30 @@ export function themeFromPalette(opts: {
     vars,
     xterm: deriveXterm(vars, opts.appearance),
     monaco: deriveMonaco(vars, opts.appearance)
+  }
+}
+
+/**
+ * Re-color an existing theme from the editor. Tokens, terminal ground and editor chrome follow
+ * the new palette; an imported theme keeps its ANSI colors and syntax rules.
+ */
+export function rebuildTheme(
+  prev: CustomTheme,
+  opts: { name: string; appearance: 'dark' | 'light'; canvas: string; accent: string; colors?: Record<string, string> }
+): CustomTheme {
+  const next = themeFromPalette(opts)
+  const { background: _b, foreground: _f, cursor: _c, cursorAccent: _ca, selectionBackground: _s, ...ansi } = prev.xterm
+  void [_b, _f, _c, _ca, _s]
+  const keepAnsi = prev.appearance === opts.appearance ? ansi : {}
+  return {
+    ...next,
+    id: prev.id,
+    xterm: { ...keepAnsi, ...next.xterm },
+    monaco: {
+      ...next.monaco,
+      colors: { ...(prev.appearance === opts.appearance ? prev.monaco.colors : {}), ...next.monaco.colors },
+      rules: prev.appearance === opts.appearance ? prev.monaco.rules : []
+    }
   }
 }
 
@@ -506,8 +565,9 @@ export function parseCustomThemes(raw: string): CustomTheme[] {
 
 export { STORAGE_KEY as CUSTOM_THEMES_KEY }
 
-/** Inject (or remove) the <style> that carries a custom theme's tokens. */
-export function applyCustomThemeCss(t: CustomTheme | null): void {
+/** Inject (or remove) the <style> that carries a custom theme's tokens. Also drives the color
+    editor's live preview, hence only the token half of a theme is needed. */
+export function applyCustomThemeCss(t: Pick<CustomTheme, 'vars' | 'appearance'> | null): void {
   let el = document.getElementById(STYLE_ID) as HTMLStyleElement | null
   if (!t) {
     el?.remove()

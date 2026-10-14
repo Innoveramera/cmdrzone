@@ -72,16 +72,35 @@ monaco.editor.defineTheme('zone', {
   }
 })
 
-// Custom (imported) themes are registered with Monaco on first use, keyed by their id.
-// Re-registering with the same id is harmless, so this just tracks what's been defined.
-const definedCustom = new Set<string>()
+// The light themes (themes.ts) sit on vs's light syntax colors; only the chrome is retinted
+// so the editor well matches its panel instead of glaring pure white.
+const lightChrome = (bg: string, fg: string, accent: string, line: string, sel: string, gutter: string, widget: string, border: string): monaco.editor.IStandaloneThemeData => ({
+  base: 'vs',
+  inherit: true,
+  rules: [],
+  colors: {
+    'editor.background': bg,
+    'editor.foreground': fg,
+    'editor.lineHighlightBackground': line,
+    'editor.selectionBackground': sel,
+    'editorCursor.foreground': accent,
+    'editorLineNumber.foreground': gutter,
+    'editorLineNumber.activeForeground': fg,
+    'editorWidget.background': widget,
+    'editorWidget.border': border,
+    'editorGutter.background': bg,
+    'minimap.background': bg
+  }
+})
+monaco.editor.defineTheme('daylight', lightChrome('#f8f9fb', '#1d2330', '#2f6fdf', '#eef1f6', '#cfdcf7', '#a3abb8', '#ffffff', '#cbd1db'))
+monaco.editor.defineTheme('paper', lightChrome('#fbf9f4', '#2a2620', '#b0502a', '#f2ede3', '#ecdac9', '#b3a893', '#f8f5ee', '#cbc0ad'))
+
+// Custom themes are registered with Monaco on use, keyed by their id. They can be edited in
+// place, so re-define every time (cheap, and re-registering the same id is harmless).
 export function ensureMonacoTheme(themeId: string, customs: CustomTheme[]): string {
   const def = resolveTheme(themeId, customs)
   const c = customs.find((t) => t.id === themeId)
-  if (c && !definedCustom.has(c.id)) {
-    monaco.editor.defineTheme(c.id, { base: c.monaco.base, inherit: true, rules: c.monaco.rules, colors: c.monaco.colors })
-    definedCustom.add(c.id)
-  }
+  if (c) monaco.editor.defineTheme(c.id, { base: c.monaco.base, inherit: true, rules: c.monaco.rules, colors: c.monaco.colors })
   return def.monaco
 }
 
