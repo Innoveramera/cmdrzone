@@ -26,7 +26,7 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="./index.html#features">Features</a>
-        <a href="./index.html#start">Quick start</a>
+        <a href="./index.html#download">Download</a>
         <a href="./docs.html" aria-current="page">Docs</a>
       </nav>
       <div class="nav-cta">
@@ -43,8 +43,9 @@
     <aside class="docs-nav" aria-label="Docs navigation">
       <div class="grp">Start</div>
       <a href="#overview">Overview</a>
+      <a href="#download">Download</a>
       <a href="#requirements">Requirements</a>
-      <a href="#install">Install &amp; run</a>
+      <a href="#install">Build from source</a>
       <a href="#packaging">Build &amp; package</a>
       <a href="#daily">Use it daily</a>
       <div class="grp">Features</div>
@@ -81,20 +82,36 @@
         </div>
       </section>
 
+      <!-- Download -->
+      <section class="docs-sec" id="download">
+        <h2>Download</h2>
+        <p>Grab the latest <code>CmdrZone-&lt;version&gt;-arm64.dmg</code> from <a class="link" href="https://github.com/Innoveramera/cmdrzone/releases/latest">GitHub Releases</a>, open it and drag CmdrZone to Applications. Builds are for <strong>Apple Silicon</strong>; on an Intel Mac, <a class="link" href="#install">build from source</a>.</p>
+        <p>The app isn't signed with an Apple Developer ID yet, so macOS blocks the first launch ("damaged" or "can't be opened"). Clear the quarantine flag once:</p>
+        <div class="code">
+          <div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="fn">zsh</span></div>
+<pre><code><span class="pmt">❯</span> xattr -dr com.apple.quarantine /Applications/CmdrZone.app
+<span class="pmt">❯</span> brew install tmux   <span class="cmt"># recommended: durable sessions</span></code></pre>
+        </div>
+        <div class="callout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <div><strong>tmux is separate from the app</strong> — install it whichever way you run CmdrZone. Without it everything works, but sessions end when the app closes. The <code>⛓</code> pill at the right end of the Terminals tab strip shows the mode. Agent CLIs such as <code>claude</code> are detected on your PATH automatically; nothing to configure. The app checks for new versions and opens the release page when one is out.</div>
+        </div>
+      </section>
+
       <!-- Requirements -->
       <section class="docs-sec" id="requirements">
         <h2>Requirements</h2>
         <ul>
           <li><strong>macOS</strong> (Apple Silicon recommended; Windows / Linux not yet supported).</li>
-          <li><strong>Node.js ≥ 20</strong> and <strong>pnpm ≥ 10</strong>.</li>
-          <li><strong>Xcode Command Line Tools</strong> — needed to compile the native modules (<code>node-pty</code>, <code>better-sqlite3</code>).</li>
+          <li><strong>Node.js ≥ 20</strong> and <strong>pnpm ≥ 10</strong> (building from source only).</li>
+          <li><strong>Xcode Command Line Tools</strong> (building from source only) — needed to compile the native modules (<code>node-pty</code>, <code>better-sqlite3</code>).</li>
           <li>Optional: <strong>tmux</strong> on your PATH unlocks <a class="link" href="#durable">durable sessions</a>.</li>
         </ul>
       </section>
 
       <!-- Install -->
       <section class="docs-sec" id="install">
-        <h2>Install &amp; run</h2>
+        <h2>Build from source</h2>
         <p>Clone, install dependencies, rebuild the native modules for Electron's ABI, then launch with hot reload.</p>
         <div class="code">
           <div class="code-bar"><span class="lights"><i></i><i></i><i></i></span><span class="fn">zsh</span></div>

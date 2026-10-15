@@ -87,6 +87,20 @@
     });
   });
 
+  /* ── Download: point at the newest release's DMG (static markup is the fallback) ── */
+  const versionEls = document.querySelectorAll('[data-latest-version]');
+  const dmgLinks = document.querySelectorAll('[data-latest-dmg]');
+  if (versionEls.length || dmgLinks.length) {
+    fetch('https://api.github.com/repos/Innoveramera/cmdrzone/releases/latest')
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((rel) => {
+        if (rel.tag_name) versionEls.forEach((el) => { el.textContent = rel.tag_name; });
+        const dmg = (rel.assets || []).find((a) => /\.dmg$/.test(a.name));
+        if (dmg) dmgLinks.forEach((a) => { a.href = dmg.browser_download_url; });
+      })
+      .catch(() => { /* keep the static version + releases/latest link */ });
+  }
+
   /* ── Docs TOC scroll-spy ── */
   const tocLinks = Array.from(document.querySelectorAll('.docs-nav a'));
   const sections = document.querySelectorAll('.docs-sec');

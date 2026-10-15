@@ -310,7 +310,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.06; l
 .card .ic svg { width: 21px; height: 21px; }
 .card h3 { font-size: 1.18rem; margin-bottom: 0.5rem; }
 .card p { color: var(--muted); font-size: 0.94rem; }
-.card p .kbd-inline, .card p code { font-family: var(--mono); font-size: 0.84em; color: var(--accent); background: rgba(108,140,255,0.10); padding: 0.05em 0.4em; border-radius: 5px; }
+.card p .kbd-inline, .card p code, #download p code { font-family: var(--mono); font-size: 0.84em; color: var(--accent); background: rgba(108,140,255,0.10); padding: 0.05em 0.4em; border-radius: 5px; }
 
 /* ───────────────────────── Shortcuts band ───────────────────────── */
 .keys { display: flex; flex-wrap: wrap; gap: 0.9rem 1.1rem; }

@@ -75,7 +75,33 @@ better-sqlite3 · pnpm workspace.
 - Node.js ≥ 20 and pnpm ≥ 10
 - Xcode Command Line Tools (to compile the native modules)
 
-## Quick start
+## Download
+
+Grab the latest **`CmdrZone-<version>-arm64.dmg`** from
+[GitHub Releases](https://github.com/Innoveramera/cmdrzone/releases/latest), open it and drag
+CmdrZone to Applications. Builds are for **Apple Silicon** Macs; on an Intel Mac, build from
+source (below).
+
+The app isn't signed with an Apple Developer ID yet, so macOS blocks the first launch ("damaged" or
+"can't be opened"). Clear the download quarantine once and it starts normally from then on:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/CmdrZone.app
+```
+
+Recommended extras:
+
+- **tmux** (`brew install tmux`) gives you durable sessions: agents keep running when you quit
+  the app and reattach on next launch. Without it, sessions end when CmdrZone closes; the
+  `⛓` pill at the right end of the Terminals tab strip shows which mode you're in.
+- **Claude Code** (or another agent CLI) on your login-shell `PATH`. CmdrZone detects installed
+  agents by itself and gives each one a launch button in every project; there's nothing to
+  configure.
+
+CmdrZone checks for new versions in the background and opens the release page when one is out;
+download it the same way (in-place updates need a signed build).
+
+## Build from source
 
 ```bash
 git clone https://github.com/Innoveramera/cmdrzone.git
@@ -180,7 +206,6 @@ manual download. Once signing is configured, run with `CMDRZONE_AUTO_INSTALL=1` 
 
 ## Roadmap
 
-- Durable sessions (tmux-backed) — quit the app and agents keep running, reattach later
 - Vercel deploy status; richer dev-server detection
 - Windows support
 
